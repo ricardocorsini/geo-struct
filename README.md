@@ -32,10 +32,10 @@ Para começar um modelo próprio, use **Novo projeto**. **Explorar um exemplo** 
 - Condição de água explícita: não definida, seca ou linha piezométrica prescrita, com peso específico e origem da hipótese.
 - Gerenciador de sobrecargas verticais uniformes: intensidade pendente distinta de zero, origem, habilitação por faixa, duplicação e condições explícitas de presença/ausência de cargas.
 - Alertas de cobertura e posição da água, faixas fora do terreno e sobreposição de cargas ativas; círculo geométrico de tentativa.
-- Casos de análise vinculados à seção, com hipóteses, direção explícita, métodos pretendidos, água e seleção de faixas próprias.
+- Casos de análise vinculados à seção, com hipóteses, direção explícita, métodos pretendidos, água, seleção de faixas e perfil numérico próprios, preservados ao salvar e reabrir.
 - Círculo fixo por coordenadas/desenho e limites/passos da busca circular; prévia das entradas, duplicação e exclusão com histórico.
 - Validação geométrica, diagnósticos, desfazer/refazer, proteção de propriedades em edição e de alterações não salvas.
-- Projeto `.geo.json` no formato `geostruct/4`, com leitura/migração dos arquivos das versões 1, 2 e 3; cópia local de recuperação; importação inválida preserva o projeto aberto.
+- Projeto `.geo.json` no formato `geostruct/5`, com leitura/migração dos arquivos das versões 1 a 4; cópia local de recuperação; importação inválida preserva o projeto aberto.
 - Relatório de dados de entrada com impressão/PDF pelo navegador, HTML portátil e exportação SVG da vista atual.
 - Estrutura desktop Tauri 2 com ícones padrão provisórios; a arte personalizada será incorporada em uma etapa posterior.
 
@@ -85,11 +85,11 @@ O [contrato de materiais e migração](docs/MATERIAIS-E-FORMATO.md) descreve os 
 
 O [contrato de água e cargas](docs/AGUA-E-CARGAS.md) descreve as condições, os lançamentos ativos/inativos e a migração para v3. Desativar preserva os dados; água ou cargas ausentes em um arquivo antigo ficam como não definidas.
 
-O [contrato de casos de análise](docs/CASOS-DE-ANALISE.md) descreve a associação à seção, as condições próprias dos cenários e o formato v4. Os dois métodos podem ser executados em círculo fixo ou na busca circular.
+O [contrato de casos de análise](docs/CASOS-DE-ANALISE.md) descreve a associação à seção, as condições próprias dos cenários e o formato v5. O perfil de cada caso guarda separadamente geometria, Fellenius, Bishop e busca, inclusive campos ainda pendentes. Os perfis ilustrativos do projeto padrão também são salvos. Os dois métodos podem ser executados em círculo fixo ou na busca circular.
 
 Selecione um caso e abra **Entradas para o núcleo**, nas propriedades, para conferir os dados aplicados e suas pendências. O [contrato de entradas](docs/ENTRADAS-DO-NUCLEO.md) reúne condições efetivas, materiais usados, unidades e origem em uma cópia imutável, com revisão que detecta alterações posteriores.
 
-Em **Geometria do círculo fixo**, informe a tolerância em metros e use **Preparar fatias**. A prévia mostra cortes, arco e tabela de áreas/comprimentos, com refinamento angular de até 3°. Alterações nas entradas ocultam a geometria anterior. O [contrato geométrico](docs/GEOMETRIA-DO-CIRCULO.md) documenta interseções, faces verticais, cortes obrigatórios, limitações e casos analíticos. O arquivo permanece v4; perfil e prévia ficam apenas na sessão. A preparação é independente da avaliação pelos métodos.
+Em **Geometria do círculo fixo**, informe a tolerância em metros e use **Preparar fatias**. A prévia mostra cortes, arco e tabela de áreas/comprimentos, com refinamento angular de até 3°. Alterações nas entradas ocultam a geometria anterior. O [contrato geométrico](docs/GEOMETRIA-DO-CIRCULO.md) documenta interseções, faces verticais, cortes obrigatórios, limitações e casos analíticos. O perfil aplicado fica no caso e no arquivo v5; a prévia fica na sessão. A preparação é independente da avaliação pelos métodos.
 
 Na inspeção, abra **Áreas por material** para consultar os totais e a composição de uma fatia. As parcelas preservam suas regiões de origem e o solo de fundo, incluindo materiais acima da base. A soma é conferida contra a área até o arco, sem ajustes para forçar o fechamento. Consulte o [contrato das subáreas](docs/AREAS-POR-MATERIAL.md).
 
@@ -99,11 +99,11 @@ Em **Pressões de água**, confira `u = γw max(0, zp − zbase)` nos pontos mé
 
 Em **Sobrecargas por fatia**, confira `Q = q × L` no trecho horizontal carregado, seu ponto de aplicação no terreno e braço em relação ao círculo. A inspeção conserva IDs/origens, sobreposições e momentos positivos/negativos, com totais por faixa e por fatia. Intensidade ausente em faixa contribuinte bloqueia a preparação, sem assumir zero; momento nulo não elimina a força. Veja [Sobrecargas nas fatias](docs/SOBRECARGAS-NAS-FATIAS.md) para sinais, unidades e casos independentes. O cálculo usa o momento próprio de cada faixa.
 
-Em **Entrada mecânica**, confira as fatias ordenadas no movimento, α da base, parâmetros e origem do material da base, W/Q e a distinção entre u/ue e U/Ue. A base usa a corda; `U = uℓ` é a resultante aproximada da pressão prescrita. O modo total zera ue/Ue sem apagar u/U. Sentido ou parâmetros resistentes ausentes bloqueiam apenas a consolidação, preservando as outras inspeções. Consulte [Entrada mecânica das fatias](docs/ENTRADA-MECANICA-DAS-FATIAS.md). O arquivo continua v4, somente com dados de entrada.
+Em **Entrada mecânica**, confira as fatias ordenadas no movimento, α da base, parâmetros e origem do material da base, W/Q e a distinção entre u/ue e U/Ue. A base usa a corda; `U = uℓ` é a resultante aproximada da pressão prescrita. O modo total zera ue/Ue sem apagar u/U. Sentido ou parâmetros resistentes ausentes bloqueiam apenas a consolidação, preservando as outras inspeções. Consulte [Entrada mecânica das fatias](docs/ENTRADA-MECANICA-DAS-FATIAS.md). O arquivo v5 guarda os dados de entrada e os perfis aplicados; resultados e prévias permanecem na sessão.
 
 Em **Fellenius · círculo fixo**, informe o limiar motriz (kN/m) e a tolerância de tração (kPa), então use **Calcular Fellenius**. Consulte **Inspecionar Fellenius** para normal aproximada, parcelas resistentes, momentos e diagnósticos. O FS pertence ao círculo informado; não representa o mínimo de uma busca. Faces verticais na massa, bases com modos mistos e água externa ficam fora deste recorte. Veja [regras, equações e casos independentes](docs/FELLENIUS-CIRCULO-FIXO.md).
 
-Em **Bishop Simplificado · círculo fixo**, informe F₀, tolerância do resíduo τF, máximo de avaliações K e limiares τm, τD e τt, então use **Calcular Bishop**. **Inspecionar Bishop** mostra cada tentativa, o resíduo no F avaliado, normais e parcelas por fatia. Singularidade, falta de convergência e tração além do limiar impedem apresentar um FS válido. Selecionando os dois métodos, a comparação mostra a diferença somente com resultados positivos admissíveis, nas mesmas fatias e com τD/τt iguais. Veja [regras, equações e casos independentes de Bishop](docs/BISHOP-CIRCULO-FIXO.md). Os parâmetros e resultados permanecem apenas na sessão.
+Em **Bishop Simplificado · círculo fixo**, informe F₀, tolerância do resíduo τF, máximo de avaliações K e limiares τm, τD e τt, então use **Calcular Bishop**. **Inspecionar Bishop** mostra cada tentativa, o resíduo no F avaliado, normais e parcelas por fatia. Singularidade, falta de convergência e tração além do limiar impedem apresentar um FS válido. Selecionando os dois métodos, a comparação mostra a diferença somente com resultados positivos admissíveis, nas mesmas fatias e com τD/τt iguais. Veja [regras, equações e casos independentes de Bishop](docs/BISHOP-CIRCULO-FIXO.md). Os parâmetros aplicados são salvos no caso; resultados e histórico de iterações ficam na sessão.
 
 Para a **Busca circular**, aplique os limites e passos de centros X/Z e raios no caso. Abra **Executar busca circular**, preencha o perfil e confira a contagem de círculos. A execução em segundo plano permite cancelar. Os resultados mostram o menor FS positivo admissível por método, bordas, empates e descartes. **Ver círculos avaliados** reúne os diagnósticos e a inspeção permite desenhar as fatias e conferir o refinamento do círculo escolhido. Consulte as [regras e os casos de verificação da busca](docs/BUSCA-CIRCULAR.md).
 
@@ -119,7 +119,7 @@ Licença MIT. Dependências preservam suas licenças; veja [THIRD_PARTY_NOTICES.
 
 Em **Análise → Conferir modelo**, filtre por seção/caso e severidade. Cada caso inclui a geometria e os materiais compartilhados, além das condições efetivas de água/cargas do cenário. Materiais sem uso aparecem em um escopo próprio. Clique numa pendência para abrir o cadastro correspondente; rascunhos continuam protegidos. O relatório de entradas inclui a mesma conferência por escopo. Pendências compartilhadas aparecem em cada caso afetado, portanto as contagens não são somáveis como ocorrências únicas.
 
-A conferência é derivada dos dados aplicados e não altera o formato v4 ou cria resultados. Ausência de pendências não comprova admissibilidade das superfícies nem estabilidade. Testes cobrem dependências compartilhadas, isolamento, condições próprias, ida/volta do arquivo, navegação e rascunhos. O salvamento recusa projetos acima de 8 MB para evitar produzir um arquivo que o leitor rejeitaria; o modelo aberto permanece disponível para edição.
+A conferência é derivada dos dados aplicados e não altera o formato v5 ou cria resultados. Ausência de pendências não comprova admissibilidade das superfícies nem estabilidade. Testes cobrem dependências compartilhadas, isolamento, condições próprias, ida/volta do arquivo, navegação e rascunhos. O salvamento recusa projetos acima de 8 MB para evitar produzir um arquivo que o leitor rejeitaria; o modelo aberto permanece disponível para edição.
 
 ## Distribuição desktop 0.2.0
 

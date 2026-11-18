@@ -32,6 +32,7 @@ test("abre o padrão e calcula a busca e o círculo fixo sem digitar os perfis",
       result.getByRole("region", { name: `Busca · ${method}`, exact: true }),
     ).toContainText("Menor FS na malha =");
   }
+  const searchSummary = await result.textContent();
 
   await page
     .getByRole("button", { name: "Talude — círculo fixo", exact: true })
@@ -48,9 +49,16 @@ test("abre o padrão e calcula a busca e o círculo fixo sem digitar os perfis",
     ).toContainText("FS =");
   }
   await expect(page.getByLabel("Diferença entre métodos")).toBeVisible();
+  const fixedFactors = await Promise.all(
+    ["Fellenius", "Bishop"].map((method) =>
+      page
+        .getByLabel(`Fator de segurança ${method}`, { exact: true })
+        .textContent(),
+    ),
+  );
 
   const project = await save(page);
-  expect(project.version).toBe(4);
+  expect(project.version).toBe(5);
   expect(project.analysisCases.map((c) => c.surfaceMode)).toEqual([
     "search",
     "fixed",
@@ -70,13 +78,64 @@ test("abre o padrão e calcula a busca e o círculo fixo sem digitar os perfis",
   await page
     .getByRole("button", { name: "Talude — busca circular", exact: true })
     .click();
-  await page.locator(".circular-search-panel > summary").click();
+  if (
+    (await page.locator(".circular-search-panel").getAttribute("open")) === null
+  )
+    await page.locator(".circular-search-panel > summary").click();
+  await page.locator(".search-profile > summary").click();
   await expect(
     page.getByLabel("Busca · Tolerância geométrica (m)", { exact: true }),
-  ).toHaveValue("");
+  ).toHaveValue("1e-8");
+  for (const [label, value] of [
+    ["Abertura máxima por fatia (°)", "3"],
+    ["Limiar motriz τD (kN/m)", "0"],
+    ["Tolerância de tração τt (kPa)", "0"],
+    ["Faixa de quase empate em FS", "0.01"],
+    ["Fator inicial F₀", "1.4"],
+    ["Tolerância do resíduo τF", "1e-8"],
+    ["Máximo de avaliações K", "100"],
+    ["Limiar de singularidade τm", "0"],
+  ])
+    await expect(
+      page.getByLabel(`Busca · ${label}`, { exact: true }),
+    ).toHaveValue(value);
   await expect(
     page.getByRole("button", { name: "Iniciar busca circular", exact: true }),
-  ).toBeDisabled();
+  ).toBeEnabled();
+  await expect(result).toHaveCount(0);
+  await page
+    .getByRole("button", { name: "Iniciar busca circular", exact: true })
+    .click();
+  await expect(result).toContainText("27 círculos avaliados");
+  expect(await result.textContent()).toBe(searchSummary);
+  await page
+    .getByRole("button", { name: "Talude — círculo fixo", exact: true })
+    .click();
+  if (
+    (await page.locator(".fixed-circle-preview").getAttribute("open")) === null
+  )
+    await page.locator(".fixed-circle-preview > summary").click();
+  await expect(
+    page.getByLabel("Tolerância geométrica (m)", { exact: true }),
+  ).toHaveValue("1e-8");
+  await expect(
+    page.getByLabel("Limiar motriz τD (kN/m)", { exact: true }),
+  ).toHaveValue("0");
+  await expect(
+    page.getByLabel("Bishop · Fator inicial F₀", { exact: true }),
+  ).toHaveValue("1.4");
+  await page
+    .getByRole("button", { name: "Preparar fatias", exact: true })
+    .click();
+  for (const [index, method] of ["Fellenius", "Bishop"].entries()) {
+    await page
+      .getByRole("button", { name: `Calcular ${method}`, exact: true })
+      .click();
+    await expect(
+      page.getByLabel(`Fator de segurança ${method}`, { exact: true }),
+    ).toHaveText(fixedFactors[index]!);
+  }
+  expect(await save(page)).toEqual(project);
 });
 
 test("a aba Arquivo protege o rascunho e permite salvar o projeto anterior antes de abrir o padrão", async ({

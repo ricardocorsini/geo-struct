@@ -2,21 +2,21 @@
 
 React, TypeScript e Vite compõem a interface. Tauri 2 fornece a janela nativa para Linux/Windows. Os arquivos, a tipografia, os ícones e o processamento são locais. Não existe backend remoto, conta ou telemetria do produto.
 
-| Camada                           | Responsabilidade                                                                            |
-| -------------------------------- | ------------------------------------------------------------------------------------------- |
-| `src/domain/model.ts`            | Contrato `geostruct/4`, migração de v1/v2/v3, materiais, seções, IDs e validação estrutural |
-| `src/domain/materials.ts`        | Pendências, consulta de uso, criação/duplicação, atribuição e substituição de materiais     |
-| `src/domain/analysis.ts`         | Casos, condições resolvidas para prévia/conferência, referências e operações por seção      |
-| `src/domain/conditions.ts`       | Condições de água/cargas, seleção de dados ativos e operações imutáveis de sobrecarga       |
-| `src/domain/geometry.ts`         | Contornos, interpolação, sobreposição, cobertura e diagnósticos do editor                   |
-| `src/domain/editing.ts`          | Operações imutáveis de vértices/contornos, interfaces coincidentes, divisão e cópia         |
-| `src/domain/precision.ts`        | Captura, entrada absoluta/relativa/polar e medição, sem dependência de tela                 |
-| `src/domain/history.ts`          | Histórico imutável, limitado a 50 transações                                                |
-| `src/components/ModelCanvas.tsx` | Vista SVG, coordenadas de tela, pan/zoom, captura e prévias de desenho                      |
-| `src/components/Inspector.tsx`   | Rascunhos de campos e aplicação transacional                                                |
-| `src/App.tsx`                    | Projeto ativo, seleção, comandos, histórico e proteções de navegação                        |
-| `src/lib/files.ts`               | Adaptadores web/desktop, serialização, exportação e recuperação                             |
-| `src-tauri`                      | Identidade nativa, diálogos, permissões e empacotamento                                     |
+| Camada                           | Responsabilidade                                                                              |
+| -------------------------------- | --------------------------------------------------------------------------------------------- |
+| `src/domain/model.ts`            | Contrato `geostruct/5`, migração de v1 a v4, perfis numéricos por caso e validação estrutural |
+| `src/domain/materials.ts`        | Pendências, consulta de uso, criação/duplicação, atribuição e substituição de materiais       |
+| `src/domain/analysis.ts`         | Casos, condições resolvidas para prévia/conferência, referências e operações por seção        |
+| `src/domain/conditions.ts`       | Condições de água/cargas, seleção de dados ativos e operações imutáveis de sobrecarga         |
+| `src/domain/geometry.ts`         | Contornos, interpolação, sobreposição, cobertura e diagnósticos do editor                     |
+| `src/domain/editing.ts`          | Operações imutáveis de vértices/contornos, interfaces coincidentes, divisão e cópia           |
+| `src/domain/precision.ts`        | Captura, entrada absoluta/relativa/polar e medição, sem dependência de tela                   |
+| `src/domain/history.ts`          | Histórico imutável, limitado a 50 transações                                                  |
+| `src/components/ModelCanvas.tsx` | Vista SVG, coordenadas de tela, pan/zoom, captura e prévias de desenho                        |
+| `src/components/Inspector.tsx`   | Rascunhos de campos e aplicação transacional                                                  |
+| `src/App.tsx`                    | Projeto ativo, seleção, comandos, histórico e proteções de navegação                          |
+| `src/lib/files.ts`               | Adaptadores web/desktop, serialização, exportação e recuperação                               |
+| `src-tauri`                      | Identidade nativa, diálogos, permissões e empacotamento                                       |
 
 O modelo usa coordenadas cartesianas X e Z, com Z positivo para cima. O campo JSON `y` armazena a coordenada vertical Z. Comprimentos em m, tensões em kPa e pesos específicos em kN/m³. Zoom e pan pertencem à vista, nunca alteram o modelo.
 
@@ -24,11 +24,13 @@ Cada seção possui um terreno e uma base horizontal; o domínio é fechado auto
 
 O terreno admite X não decrescente e faces verticais, sem retorno sobre segmentos nem prolongamentos sem área nas extremidades. A base continua horizontal e perfis em balanço não são admitidos. A linha piezométrica mantém X estritamente crescente. Na abscissa de uma face vertical, o desenho de cargas usa o envelope superior e o diagnóstico de água acima do terreno usa o inferior. Essas convenções servem ao editor, não definem forças ou admissibilidade do futuro solver. A tolerância geométrica do editor é `1e-7 m`; não determina convergência, admissibilidade ou tolerância do futuro cálculo.
 
-Os contornos continuam armazenados como listas de pontos. O formato atual é `geostruct/4`: acrescenta casos com identidade e vínculo à seção; conserva as pendências de materiais introduzidas em v2 e acrescenta condições explícitas de água/cargas, peso específico da água, origem e habilitação de cargas, além de q nulo. A leitura valida v1/v2/v3 em seus contratos antes de migrar; preserva valores, coordenadas e IDs e não interpreta ausência de lançamento como condição seca ou sem cargas. Campos desconhecidos são recusados. A interface comunica a migração e marca o projeto para salvar; aplicativos antigos não leem v4. Use Salvar como para manter o original. A recuperação local antiga passa pela mesma leitura. Grade, restrição ortogonal e vinculação de interfaces são opções da sessão, não parâmetros físicos serializados.
+Os contornos continuam armazenados como listas de pontos. O formato atual é `geostruct/5`: acrescenta `numericalProfile` a cada caso e conserva identidades, vínculos à seção, pendências de materiais e condições de água/cargas dos formatos anteriores. A leitura valida v1 a v4 em seus contratos antes de migrar; preserva valores, coordenadas e IDs e não interpreta ausência de lançamento como condição seca ou sem cargas. Casos de v4 recebem perfil vazio, com a abertura angular de 3° já usada e os demais parâmetros nulos. Campos desconhecidos e perfis com números inválidos são recusados. A interface comunica a migração e marca o projeto para salvar; aplicativos antigos não leem v5. Use Salvar como para manter o original. A recuperação local antiga passa pela mesma leitura. Grade, restrição ortogonal e vinculação de interfaces são opções da sessão, não parâmetros físicos serializados.
 
 `conditions.ts` centraliza quais lançamentos estão ativos. Desenho, captura e diagnósticos geométricos usam somente a água piezométrica e as faixas habilitadas na condição de cargas. Dados guardados continuam no cadastro e relatório, com identificação de inatividade. Trocas no gerenciador são transações imediatas; propriedades usam rascunho/Aplicar. Duplicar carga cria ID próprio e cópia desabilitada. Reativação que introduza erro geométrico é recusada e apresentada no formulário. `introducedError` distingue os diagnósticos por seção, destino e mensagem. Veja [Água e cargas](AGUA-E-CARGAS.md).
 
 `analysis.ts` mantém os casos fora da geometria da seção, em `project.analysisCases`. Cada caso referencia a seção e, opcionalmente, IDs de faixas dela. `resolveCaseSection` produz uma cópia para prévia e conferência, aplicando condições do caso sem modificar a seção armazenada. A condição herdada é dinâmica; a opção de faixas selecionadas independe da habilitação global. O desenho do caso é uma prévia sem edição da geometria base; a árvore ou Voltar à seção base retorna à edição. A seleção de caso é estado da sessão, não altera o arquivo.
+
+O `numericalProfile` aplicado integra cada caso. Seus grupos `geometry`, `fellenius`, `bishop` e `search` são independentes do modo e dos métodos selecionados; a busca guarda `geometry`, `equilibrium`, `bishop` e `nearTieTolerance`. Todos os campos são numéricos ou nulos, permitindo salvar configurações parciais e indicar o que falta para executar. Edições válidas entram no histórico do projeto e sobrevivem à serialização, duplicação e desfazer/refazer. A interface protege rascunhos inválidos e guarda somente os dados aplicados. Os perfis ilustrativos de `default-project.ts` fazem parte dos casos do projeto padrão e são salvos no arquivo.
 
 Duplicar a seção duplica seus casos e remapeia IDs das cargas; excluir a seção exclui seus casos na mesma transação e com confirmação explícita. Faixas referenciadas em seleções de casos, inclusive guardadas/inativas, não podem ser excluídas até retirar essas referências. O círculo de tentativa permanece independente: copiar para um caso é uma operação explícita. A migração não cria casos automaticamente. Veja [Casos de análise](CASOS-DE-ANALISE.md).
 
@@ -50,7 +52,7 @@ Os diálogos nativos ampliam o escopo apenas para caminhos selecionados pelo usu
 
 `src/core/circle-geometry.ts` e `src/core/fixed-circle.ts` preparam interseções e fatias de um círculo fixo. Consomem a entrada independente e um perfil geométrico explícito, sem importar o editor ou sua tolerância. O resultado imutável inclui revisão, interseções, cortes com origem, grandezas geométricas e diagnósticos. `FixedCirclePreview` apresenta os controles e tabela; `SliceOverlay` desenha as fatias na vista existente. A área usa o arco analítico, não o desenho SVG.
 
-O App mantém apenas uma prévia em memória e a apresenta quando sua revisão corresponde ao caso aplicado; rascunhos ocultam o desenho. Mudar o perfil remove a prévia. Preparar geometria não modifica o projeto ou o histórico. O referencial original é conservado; não há normalização motriz ou interpretação mecânica de faces verticais. Veja [Geometria do círculo](GEOMETRIA-DO-CIRCULO.md).
+O App mantém apenas uma prévia em memória e a apresenta quando sua revisão corresponde ao caso aplicado; rascunhos ocultam o desenho. Mudar o perfil remove a prévia e registra os parâmetros aplicados no caso e no histórico. Preparar geometria produz apenas a prévia de sessão. O referencial original é conservado; não há normalização motriz ou interpretação mecânica de faces verticais. Veja [Geometria do círculo](GEOMETRIA-DO-CIRCULO.md).
 
 `src/core/material-areas.ts` decompõe as fatias por varredura vertical das regiões em coordenadas locais. Integra os intervalos de cada origem e os intervalos livres de fundo, preservando o arco analítico. Agrupa materiais por ID, mantém as parcelas por região/fundo e confere a soma contra a área geométrica, sem ajustar resíduos. Limites internos não alteram as fatias existentes. O contrato `geostruct-fixed-geometry/2` inclui essa composição e seu balanço; `MaterialAreaInspection` apresenta totais e a fatia selecionada. Falhas de atribuição, topologia, conservação ou capacidade retornam diagnóstico sem geometria parcial. Veja [Áreas por material](AREAS-POR-MATERIAL.md).
 
@@ -64,7 +66,7 @@ O App mantém apenas uma prévia em memória e a apresenta quando sua revisão c
 
 `src/core/fellenius.ts` avalia a entrada mecânica aplicada por D1, com pressão neutra projetada, braços próprios das faixas, somas compensadas e perfil explícito de limiar motriz/tração. O contrato imutável `geostruct-fellenius/1` conserva revisão, perfil, círculo, parcelas por fatia, totais e diagnósticos. Recusa modo misto, face vertical na massa e inconsistências; distingue cálculo positivo, resistência nula (FS zero) e rejeição (FS nulo). Ver [Fellenius em círculo fixo](FELLENIUS-CIRCULO-FIXO.md).
 
-`FelleniusPanel` executa o método somente por ação explícita. Campos numéricos começam vazios; alteração de perfil remove o resultado. A apresentação exige a mesma entrada mecânica; rascunho, revisão, histórico, arquivo ou troca de caso retiram o resultado anterior. Inspeção própria apresenta os valores brutos e os diagnósticos, inclusive quando a admissibilidade impede fornecer FS.
+`FelleniusPanel` executa o método somente por ação explícita. Os campos recebem os parâmetros guardados no caso e exibem as pendências nulas. Alteração de perfil remove o resultado. A apresentação exige a mesma entrada mecânica; rascunho, revisão, histórico, arquivo ou troca de caso retiram o resultado anterior. Inspeção própria apresenta os valores brutos e os diagnósticos, inclusive quando a admissibilidade impede fornecer FS.
 
 `src/core/limit-equilibrium.ts` compartilha a validação da entrada aplicada, consistência das fatias/cargas, aritmética finita, somas compensadas e denominador motriz. Não usa a admissibilidade de Fellenius como pré-condição de Bishop: normais e resistência são avaliadas por cada método.
 
@@ -76,10 +78,10 @@ O App mantém apenas uma prévia em memória e a apresenta quando sua revisão c
 
 `CircularSearchPanel` inicia um Worker por execução. Recebe o progresso em contagens de candidatos e termina o Worker ao cancelar, editar o caso ou sair da seleção. Guarda dados compactos dos círculos concluídos. A inspeção reproduz apenas o círculo solicitado com a entrada e o perfil originais. O recálculo com abertura menor também ocorre em Worker. O desenho usa a geometria do círculo inspecionado, vinculada à revisão ativa.
 
-O arquivo permanece v4. Os perfis, resultados e prévias pertencem à sessão. Modos mistos, faces verticais no arco analisado e água externa continuam condicionando a admissibilidade dos métodos. Consulte [Busca circular](BUSCA-CIRCULAR.md) para as regras locais e a distinção entre teste de software e aceite de engenharia.
+O arquivo v5 guarda os perfis numéricos aplicados por caso. Resultados, prévias, progresso e Workers pertencem à sessão. Modos mistos, faces verticais no arco analisado e água externa continuam condicionando a admissibilidade dos métodos. Consulte [Busca circular](BUSCA-CIRCULAR.md) para as regras locais e a distinção entre teste de software e aceite de engenharia.
 
 ## Conferência integrada dos lançamentos
 
 Em **Análise → Conferir modelo**, filtre por seção/caso e severidade. Cada caso inclui a geometria e os materiais compartilhados, além das condições efetivas de água/cargas do cenário. Materiais sem uso aparecem em um escopo próprio. Clique numa pendência para abrir o cadastro correspondente; rascunhos continuam protegidos. O relatório de entradas inclui a mesma conferência por escopo. Pendências compartilhadas aparecem em cada caso afetado, portanto as contagens não são somáveis como ocorrências únicas.
 
-A conferência é derivada dos dados aplicados e não altera o formato v4 ou cria resultados. Ausência de pendências não comprova admissibilidade das superfícies nem estabilidade. Testes cobrem dependências compartilhadas, isolamento, condições próprias, ida/volta do arquivo, navegação e rascunhos. O salvamento recusa projetos acima de 8 MB para evitar produzir um arquivo que o leitor rejeitaria; o modelo aberto permanece disponível para edição.
+A conferência é derivada dos dados aplicados e não altera o formato v5 ou cria resultados. Ausência de pendências não comprova admissibilidade das superfícies nem estabilidade. Testes cobrem dependências compartilhadas, isolamento, condições próprias, ida/volta do arquivo, navegação e rascunhos. O salvamento recusa projetos acima de 8 MB para evitar produzir um arquivo que o leitor rejeitaria; o modelo aberto permanece disponível para edição.

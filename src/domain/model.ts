@@ -1,4 +1,77 @@
 import { z } from "zod";
+import { MAX_BISHOP_ITERATIONS } from "../core/bishop";
+
+const positiveNumber = z.number().finite().positive().nullable();
+const nonnegativeNumber = z.number().finite().min(0).nullable();
+const numericalGeometrySchema = z
+  .object({
+    toleranceM: positiveNumber,
+    maxArcDegrees: z.number().finite().positive().max(3).nullable(),
+  })
+  .strict();
+const numericalEquilibriumSchema = z
+  .object({
+    drivingThresholdKNPerM: nonnegativeNumber,
+    tensionToleranceKPa: nonnegativeNumber,
+  })
+  .strict();
+const numericalBishopIterationSchema = z
+  .object({
+    initialFactor: positiveNumber,
+    residualTolerance: positiveNumber,
+    maxIterations: z
+      .number()
+      .finite()
+      .int()
+      .min(1)
+      .max(MAX_BISHOP_ITERATIONS)
+      .nullable(),
+    singularityThreshold: nonnegativeNumber,
+  })
+  .strict();
+export const numericalProfileSchema = z
+  .object({
+    geometry: numericalGeometrySchema,
+    fellenius: numericalEquilibriumSchema,
+    bishop: numericalEquilibriumSchema.extend(
+      numericalBishopIterationSchema.shape,
+    ),
+    search: z
+      .object({
+        geometry: numericalGeometrySchema,
+        equilibrium: numericalEquilibriumSchema,
+        bishop: numericalBishopIterationSchema,
+        nearTieTolerance: nonnegativeNumber,
+      })
+      .strict(),
+  })
+  .strict();
+export type NumericalProfile = z.infer<typeof numericalProfileSchema>;
+
+export function emptyNumericalProfile(): NumericalProfile {
+  const geometry = () => ({ toleranceM: null, maxArcDegrees: 3 });
+  const equilibrium = () => ({
+    drivingThresholdKNPerM: null,
+    tensionToleranceKPa: null,
+  });
+  const bishop = () => ({
+    initialFactor: null,
+    residualTolerance: null,
+    maxIterations: null,
+    singularityThreshold: null,
+  });
+  return {
+    geometry: geometry(),
+    fellenius: equilibrium(),
+    bishop: { ...equilibrium(), ...bishop() },
+    search: {
+      geometry: geometry(),
+      equilibrium: equilibrium(),
+      bishop: bishop(),
+      nearTieTolerance: null,
+    },
+  };
+}
 
 const coordinate = z.number().finite().min(-1e6).max(1e6);
 const id = z.string().min(1).max(100);
@@ -34,6 +107,7 @@ export const analysisCaseSchema = z
       .max(2)
       .refine((v) => new Set(v).size === v.length, "Métodos repetidos."),
     surfaceMode: z.enum(["fixed", "search"]).nullable(),
+    numericalProfile: numericalProfileSchema,
     fixedCircle: z
       .object({
         x: coordinate.nullable(),
@@ -141,7 +215,7 @@ const sectionSchema = z
 const projectFields = z
   .object({
     format: z.literal("geostruct"),
-    version: z.literal(4),
+    version: z.literal(5),
     id,
     name,
     author: z.string().max(200),
@@ -214,7 +288,14 @@ function checkReferences(
   }
 }
 export const projectSchema = projectFields.superRefine(checkReferences);
-const v3Fields = projectFields
+const v4Fields = projectFields.extend({
+  version: z.literal(4),
+  analysisCases: z
+    .array(analysisCaseSchema.omit({ numericalProfile: true }))
+    .max(100),
+});
+const v4ProjectSchema = v4Fields.superRefine(checkReferences);
+const v3Fields = v4Fields
   .omit({ analysisCases: true })
   .extend({ version: z.literal(3) });
 const v3ProjectSchema = v3Fields.superRefine(checkReferences);
@@ -304,7 +385,7 @@ export function newProject(projectName: string, author = ""): Project {
   m.name = "Solo 1";
   return {
     format: "geostruct",
-    version: 4,
+    version: 5,
     id: uid(),
     name: projectName,
     author,
@@ -424,7 +505,9 @@ export function readProject(text: string): {
         ? v2ProjectSchema
         : version === 3
           ? v3ProjectSchema
-          : projectSchema
+          : version === 4
+            ? v4ProjectSchema
+            : projectSchema
   ).safeParse(value);
   if (!r.success)
     throw new Error(
@@ -435,16 +518,28 @@ export function readProject(text: string): {
           .join(" · "),
     );
   const data = r.data;
-  if (data.version === 4) return { project: data, migrated: false };
+  if (data.version === 5) return { project: data, migrated: false };
+  if (data.version === 4)
+    return {
+      project: projectSchema.parse({
+        ...data,
+        version: 5,
+        analysisCases: data.analysisCases.map((c) => ({
+          ...c,
+          numericalProfile: emptyNumericalProfile(),
+        })),
+      }),
+      migrated: true,
+    };
   if (data.version === 3)
     return {
-      project: projectSchema.parse({ ...data, version: 4, analysisCases: [] }),
+      project: projectSchema.parse({ ...data, version: 5, analysisCases: [] }),
       migrated: true,
     };
   return {
     project: projectSchema.parse({
       ...data,
-      version: 4,
+      version: 5,
       analysisCases: [],
       sections: data.sections.map((s) => ({
         ...s,

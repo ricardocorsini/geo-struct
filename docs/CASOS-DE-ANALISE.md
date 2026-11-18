@@ -1,6 +1,6 @@
-# Casos de análise e formato v4
+# Casos de análise e formato v5
 
-Um caso prepara as entradas de uma análise na geometria de uma seção. Cada caso tem ID próprio; geometria, materiais, linha piezométrica e dados das faixas continuam no cadastro da seção. Mudar esses dados afeta os casos vinculados. A versão em desenvolvimento permite preparar a [geometria das fatias de um círculo fixo](GEOMETRIA-DO-CIRCULO.md), sem gravá-la no arquivo. Fellenius e Bishop também podem avaliar os círculos da [busca circular](BUSCA-CIRCULAR.md). Os cálculos e perfis numéricos ficam na sessão.
+Um caso prepara as entradas de uma análise na geometria de uma seção. Cada caso tem ID próprio; geometria, materiais, linha piezométrica e dados das faixas continuam no cadastro da seção. Mudar esses dados afeta os casos vinculados. A versão em desenvolvimento permite preparar a [geometria das fatias de um círculo fixo](GEOMETRIA-DO-CIRCULO.md), sem gravá-la no arquivo. Fellenius e Bishop também podem avaliar os círculos da [busca circular](BUSCA-CIRCULAR.md). O perfil numérico aplicado pertence ao caso e é salvo no arquivo. Resultados dos cálculos e prévias ficam na sessão.
 
 ## Contrato
 
@@ -13,6 +13,7 @@ Um caso prepara as entradas de uma análise na geometria de uma seção. Cada ca
 | `direction`               | `left-to-right` (+X), `right-to-left` (−X) ou nulo; não inferida pela inclinação do terreno                                        |
 | `methods`                 | Lista sem duplicatas de `bishop` e/ou `fellenius`; vazia é pendência. Os dois métodos estão disponíveis para círculo fixo e busca. |
 | `surfaceMode`             | `fixed`, `search` ou nulo                                                                                                          |
+| `numericalProfile`        | Configurações numéricas de geometria, Fellenius, Bishop e busca; campos numéricos ou nulos enquanto pendentes                      |
 | `fixedCircle`             | Centro `x`, `y` (Z) em m e `radius` em m; cada valor pode ser nulo enquanto pendente                                               |
 | `search`                  | Eixos `x`, `y` (Z) e `radius`, cada um com `min`, `max` e `step` em m, inicialmente nulos                                          |
 | `waterCondition`          | Nulo, `section`, `dry` ou `piezometric`                                                                                            |
@@ -22,9 +23,28 @@ Um caso prepara as entradas de uma análise na geometria de uma seção. Cada ca
 
 Coordenadas têm o limite de armazenamento existente de ±1.000.000 m; raios devem ser positivos e até 1.000.000 m; passos devem ser positivos e até 2.000.000 m. São limites de cadastro, sem significado de recomendação de engenharia. Campos faltantes permanecem nulos, sem valores presumidos. O referencial original X/Z é preservado ao mudar a direção; A normalização pelo sentido ocorre na entrada mecânica das fatias.
 
-Mínimo não pode exceder máximo no modo de busca ativo. Intervalos não nulos exigem passo informado; um intervalo fixo admite passo nulo. O painel de busca usa os valores aplicados, mostra a contagem de candidatos e pede um perfil separado. Consulte as regras de enumeração, capacidade e classificação em [Busca circular](BUSCA-CIRCULAR.md).
+Mínimo não pode exceder máximo no modo de busca ativo. Intervalos não nulos exigem passo informado; um intervalo fixo admite passo nulo. O painel de busca usa os valores aplicados, mostra a contagem de candidatos e usa o grupo de perfil de busca guardado no caso. Consulte as regras de enumeração, capacidade e classificação em [Busca circular](BUSCA-CIRCULAR.md).
 
 O registro de centros, raios e passos explícitos segue o recorte de D5 registrado na [decisão de engenharia da #30](https://github.com/ricardocorsini/openstruct-front/issues/30#issuecomment-6850038580). A [especificação candidata](https://github.com/ricardocorsini/openstruct-front/issues/30#issuecomment-6863167450) mantém R0–R6 e aceite integral pendentes na consulta de 17/11/2026. O cadastro guarda as entradas do caso. O núcleo aplica as regras documentadas do recorte de busca.
+
+## Perfil numérico
+
+`numericalProfile` guarda os grupos abaixo, independentemente do modo de superfície ou dos métodos selecionados.
+
+| Grupo       | Campos                                                                                                                          |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `geometry`  | `toleranceM` e `maxArcDegrees` para a preparação do círculo fixo                                                                |
+| `fellenius` | `drivingThresholdKNPerM` e `tensionToleranceKPa`                                                                                |
+| `bishop`    | `drivingThresholdKNPerM`, `tensionToleranceKPa`, `initialFactor`, `residualTolerance`, `maxIterations` e `singularityThreshold` |
+| `search`    | `geometry`, `equilibrium`, `bishop` e `nearTieTolerance`                                                                        |
+
+Na busca, `geometry` usa os mesmos nomes do grupo geométrico, `equilibrium` guarda os dois limiares comuns dos métodos e `bishop` guarda `initialFactor`, `residualTolerance`, `maxIterations` e `singularityThreshold`. `nearTieTolerance` é a tolerância de quase empate. Cada grupo conserva seus próprios valores ao trocar modo ou método.
+
+Todos os campos aceitam número ou `null`. Nulo indica uma configuração a completar e pode ser salvo. Números preenchidos precisam ser finitos e respeitar os limites do núcleo: tolerância geométrica, F₀ e tolerância de resíduo positivos; abertura angular maior que zero e até 3°; K inteiro de 1 a 1.000; demais limiares e quase empate não negativos. Campos desconhecidos e números inválidos são recusados. A execução exige os campos necessários ao modo e aos métodos ativos.
+
+Um caso novo recebe perfil vazio, com a abertura angular de 3° já usada pela preparação geométrica. Os demais campos começam nulos. O projeto padrão fornece perfis ilustrativos preenchidos, que também são serializados. Ao reabrir um caso, seus parâmetros aplicados voltam aos controles; resultados e prévias precisam ser produzidos novamente pelas ações de cálculo.
+
+Edições válidas do perfil entram no projeto e no histórico. Texto numérico inválido permanece em rascunho, com mensagem e proteção ao trocar de contexto. O arquivo e a recuperação local guardam somente os dados aplicados. Duplicar um caso ou uma seção copia os grupos do perfil com valores independentes; desfazer/refazer restaura o estado aplicado de cada caso.
 
 ## Resolução das condições
 
@@ -58,6 +78,8 @@ A prévia de caso permite navegar e inspecionar suas entradas; editar a geometri
 
 ## Migração
 
-O formato atual é `geostruct/4`. O leitor valida o contrato declarado antes de migrar. Arquivos v3 recebem `analysisCases: []` e `version: 4`, conservando integralmente os demais campos, inclusive nulos, zeros, linhas/faixas inativas e círculo de tentativa. Arquivos v1/v2 recebem também os campos de água/cargas descritos em [Água e cargas](AGUA-E-CARGAS.md), sem pressupor hipóteses ausentes.
+O formato atual é `geostruct/5`. O leitor valida cada arquivo v1 a v4 pelo contrato declarado antes de migrar. Em v4, os casos existentes recebem `numericalProfile` vazio e `version: 5`. A abertura angular recebe os 3° já usados na preparação; os demais parâmetros ficam nulos e aparecem como pendências. Perfis numéricos que existiam apenas na sessão de uma versão anterior precisam ser preenchidos novamente.
 
-Não se deduz direção, método ou cenário de um círculo antigo. IDs, materiais e geometria são preservados. Campos desconhecidos, referências inexistentes ou cruzadas entre seções e IDs duplicados são recusados. A recuperação local mantém a mesma chave e usa esse leitor. A abertura comunica a migração e marca o projeto para salvar; Salvar como conserva o original. Versões anteriores do aplicativo não leem v4.
+Arquivos v3 recebem `analysisCases: []` e `version: 5`, conservando os demais campos, inclusive nulos, zeros, linhas/faixas inativas e círculo de tentativa. Arquivos v1/v2 recebem também os campos de água/cargas descritos em [Água e cargas](AGUA-E-CARGAS.md), sem pressupor hipóteses ausentes.
+
+Não se deduz direção, método ou cenário de um círculo antigo. IDs, materiais e geometria são preservados. Campos desconhecidos, referências inexistentes ou cruzadas entre seções e IDs duplicados são recusados. A recuperação local mantém a mesma chave e usa esse leitor. A abertura comunica a migração e marca o projeto para salvar; Salvar como conserva o original. Versões anteriores do aplicativo não leem v5.

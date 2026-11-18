@@ -15,7 +15,7 @@ export type CoreInput = Immutable<{
   contract: "geostruct-input/1";
   stage: "inputs-only";
   origin: {
-    projectFormat: "geostruct/4";
+    projectFormat: "geostruct/5";
     project: { id: string; name: string };
     section: { id: string; name: string };
     analysisCase: { id: string; name: string };

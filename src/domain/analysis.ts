@@ -1,5 +1,6 @@
 import {
   duplicateSection,
+  emptyNumericalProfile,
   uid,
   type AnalysisCase,
   type Project,
@@ -80,6 +81,7 @@ export function addAnalysisCase(
         direction: null,
         methods: [],
         surfaceMode: null,
+        numericalProfile: emptyNumericalProfile(),
         fixedCircle: { x: null, y: null, radius: null },
         search: { x: axis(), y: axis(), radius: axis() },
         waterCondition: null,

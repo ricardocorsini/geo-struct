@@ -1,3 +1,4 @@
+import { withGeometry } from "../fixtures/numerical-profile";
 import { expect, test, type Page } from "@playwright/test";
 import { addAnalysisCase } from "../../src/domain/analysis";
 import { newProject, type Project } from "../../src/domain/model";
@@ -37,7 +38,10 @@ function fixture(gamma: number | null = 10) {
 }
 async function selectCase(page: Page, name = "Círculo das pressões") {
   await page.getByRole("button", { name, exact: true }).click();
-  await page.locator(".fixed-circle-preview > summary").click();
+  if (
+    (await page.locator(".fixed-circle-preview").getAttribute("open")) === null
+  )
+    await page.locator(".fixed-circle-preview > summary").click();
   return page.getByRole("region", {
     name: "Geometria do círculo fixo",
     exact: true,
@@ -147,7 +151,7 @@ test("inspeciona pressão, ponto do arco e origem na janela mínima sem gravar r
   await dialog
     .getByRole("button", { name: "Fechar janela", exact: true })
     .click();
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p, 2.8));
   await page
     .getByLabel("Abertura máxima por fatia (°)", { exact: true })
     .fill("1,4");
@@ -163,7 +167,7 @@ test("inspeciona pressão, ponto do arco e origem na janela mínima sem gravar r
   await dialog
     .getByRole("button", { name: "Fechar janela", exact: true })
     .click();
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p, 1.4));
 });
 
 test("edição de γw e histórico invalidam pressões sem modificar pesos", async ({
@@ -196,7 +200,7 @@ test("edição de γw e histórico invalidam pressões sem modificar pesos", asy
   await expect(panel.getByLabel("Pressões de água preparadas")).toContainText(
     "0 a 5 kPa",
   );
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p, 2.8));
   await page.getByRole("tab", { name: "Geometria", exact: true }).click();
   await page.getByRole("button", { name: "Refazer", exact: true }).click();
   await selectCase(page);
@@ -205,7 +209,7 @@ test("edição de γw e histórico invalidam pressões sem modificar pesos", asy
     "0 a 10 kPa",
   );
   p.sections[0].waterUnitWeight = 20;
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p, 2.8));
 });
 
 test("γw ausente mantém áreas e pesos e pode ser completado", async ({
@@ -237,7 +241,7 @@ test("γw ausente mantém áreas e pesos e pode ser completado", async ({
   await dialog
     .getByRole("button", { name: "Fechar janela", exact: true })
     .click();
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p, 2.8));
   await water(page);
   await page
     .getByLabel("Peso específico da água γw (kN/m³)", { exact: true })
@@ -304,7 +308,7 @@ test("carga acima do terreno é sinalizada e caso seco usa zero com dados de ág
   await dialog
     .getByRole("button", { name: "Fechar janela", exact: true })
     .click();
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p, 2.8, [0, 1]));
   await selectCase(page);
   await prepare(page);
   await expect(panel.getByLabel("Diagnósticos das pressões")).toContainText(
@@ -340,5 +344,5 @@ test("linha sem cobertura não fornece pressão zero e o trecho pode ser complet
     { x: -3, y: -0.5 },
     { x: 3, y: -0.5 },
   ];
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p, 2.8));
 });

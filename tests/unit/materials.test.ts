@@ -192,7 +192,7 @@ describe("Migração de arquivos de materiais", () => {
     const old = legacy(),
       result = readProject(JSON.stringify(old));
     expect(result.migrated).toBe(true);
-    expect(result.project).toMatchObject({ ...old, version: 4 });
+    expect(result.project).toMatchObject({ ...old, version: 5 });
     expect(readProject(serializeProject(result.project))).toEqual({
       project: result.project,
       migrated: false,

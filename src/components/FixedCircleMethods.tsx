@@ -3,22 +3,27 @@ import type { InputPreparation } from "../core/input";
 import type { SliceMechanicsPreparation } from "../core/slice-mechanics";
 import type { FelleniusResult } from "../core/fellenius";
 import type { BishopResult } from "../core/bishop";
-import type { CircularSearchProfile } from "../core/circular-search";
+import type { NumericalProfile } from "../domain/model";
 import { FelleniusPanel } from "./FelleniusPanel";
 import { BishopPanel, formatResultNumber } from "./BishopPanel";
 
 type Evaluation<T> = {
-  mechanics: SliceMechanicsPreparation;
+  mechanics: SliceMechanicsPreparation | null;
   result: T | null;
 } | null;
 export function FixedCircleMethods({
   preparation,
   mechanics,
   initialProfile,
+  onProfileChange,
 }: {
   preparation: InputPreparation;
-  mechanics: SliceMechanicsPreparation;
-  initialProfile?: Pick<CircularSearchProfile, "equilibrium" | "bishop">;
+  mechanics: SliceMechanicsPreparation | null;
+  initialProfile: NumericalProfile;
+  onProfileChange: (
+    group: "fellenius" | "bishop",
+    fields: Record<string, string>,
+  ) => void;
 }) {
   const [fellenius, setFellenius] = useState<Evaluation<FelleniusResult>>(null);
   const [bishop, setBishop] = useState<Evaluation<BishopResult>>(null);
@@ -48,17 +53,15 @@ export function FixedCircleMethods({
       <FelleniusPanel
         preparation={preparation}
         mechanics={mechanics}
-        initialProfile={initialProfile?.equilibrium}
+        initialProfile={initialProfile.fellenius}
+        onProfileChange={(fields) => onProfileChange("fellenius", fields)}
         onResult={(result) => setFellenius({ mechanics, result })}
       />
       <BishopPanel
         preparation={preparation}
         mechanics={mechanics}
-        initialProfile={
-          initialProfile?.bishop
-            ? { ...initialProfile.equilibrium, ...initialProfile.bishop }
-            : undefined
-        }
+        initialProfile={initialProfile.bishop}
+        onProfileChange={(fields) => onProfileChange("bishop", fields)}
         onResult={(result) => setBishop({ mechanics, result })}
       />
       {bothSelected && (

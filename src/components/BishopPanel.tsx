@@ -8,6 +8,7 @@ import {
 import type { InputPreparation } from "../core/input";
 import type { SliceMechanicsPreparation } from "../core/slice-mechanics";
 import { parseNumber } from "../domain/geometry";
+import type { NumericalProfile } from "../domain/model";
 import { Dialog } from "./Dialog";
 
 export const formatResultNumber = (n: number) =>
@@ -61,16 +62,18 @@ export function BishopPanel({
   mechanics,
   onResult,
   initialProfile,
+  onProfileChange,
 }: {
   preparation: InputPreparation;
-  mechanics: SliceMechanicsPreparation;
+  mechanics: SliceMechanicsPreparation | null;
   onResult: (result: BishopResult | null) => void;
-  initialProfile?: BishopProfile;
+  initialProfile: NumericalProfile["bishop"];
+  onProfileChange: (fields: Record<string, string>) => void;
 }) {
   const [values, setValues] = useState(() => {
-    if (!initialProfile) return emptyFields;
     const values = { ...emptyFields };
-    for (const { key } of fields) values[key] = String(initialProfile[key]);
+    for (const { key } of fields)
+      values[key] = String(initialProfile[key] ?? "");
     return values;
   });
   const [evaluation, setEvaluation] = useState<{
@@ -83,7 +86,7 @@ export function BishopPanel({
     preparation.snapshot?.input.analysis.methods.includes("bishop");
   const last = result?.calculation?.evaluation;
   const calculate = () => {
-    if (!selected) return;
+    if (!selected || !mechanics) return;
     const profile = Object.fromEntries(
       fields.map(({ key }) => [key, parseNumber(values[key]) ?? NaN]),
     ) as BishopProfile;
@@ -106,7 +109,9 @@ export function BishopPanel({
             inputMode={key === "maxIterations" ? "numeric" : "decimal"}
             value={values[key]}
             onChange={(e) => {
-              setValues({ ...values, [key]: e.target.value });
+              const next = { ...values, [key]: e.target.value };
+              setValues(next);
+              onProfileChange(next);
               setEvaluation(null);
               onResult(null);
             }}
@@ -123,7 +128,7 @@ export function BishopPanel({
       <button
         className="secondary"
         type="button"
-        disabled={!selected || mechanics.status !== "prepared"}
+        disabled={!selected || mechanics?.status !== "prepared"}
         onClick={calculate}
       >
         Calcular Bishop

@@ -1,12 +1,9 @@
 import { useState } from "react";
-import {
-  solveFellenius,
-  type FelleniusProfile,
-  type FelleniusResult,
-} from "../core/fellenius";
+import { solveFellenius, type FelleniusResult } from "../core/fellenius";
 import type { InputPreparation } from "../core/input";
 import type { SliceMechanicsPreparation } from "../core/slice-mechanics";
 import { parseNumber } from "../domain/geometry";
+import type { NumericalProfile } from "../domain/model";
 import { Dialog } from "./Dialog";
 
 const number = (n: number) =>
@@ -20,17 +17,19 @@ export function FelleniusPanel({
   mechanics,
   onResult,
   initialProfile,
+  onProfileChange,
 }: {
   preparation: InputPreparation;
-  mechanics: SliceMechanicsPreparation;
+  mechanics: SliceMechanicsPreparation | null;
   onResult: (result: FelleniusResult | null) => void;
-  initialProfile?: FelleniusProfile;
+  initialProfile: NumericalProfile["fellenius"];
+  onProfileChange: (fields: Record<string, string>) => void;
 }) {
   const [driving, setDriving] = useState(() =>
-    initialProfile ? String(initialProfile.drivingThresholdKNPerM) : "",
+    String(initialProfile.drivingThresholdKNPerM ?? ""),
   );
   const [tension, setTension] = useState(() =>
-    initialProfile ? String(initialProfile.tensionToleranceKPa) : "",
+    String(initialProfile.tensionToleranceKPa ?? ""),
   );
   const [evaluation, setEvaluation] = useState<{
     mechanics: SliceMechanicsPreparation;
@@ -42,7 +41,7 @@ export function FelleniusPanel({
   const selected =
     preparation.snapshot?.input.analysis.methods.includes("fellenius");
   const calculate = () => {
-    if (!selected) return;
+    if (!selected || !mechanics) return;
     const result = solveFellenius(preparation, mechanics, {
       drivingThresholdKNPerM: parseNumber(driving) ?? NaN,
       tensionToleranceKPa: parseNumber(tension) ?? NaN,
@@ -65,6 +64,10 @@ export function FelleniusPanel({
           value={driving}
           onChange={(e) => {
             setDriving(e.target.value);
+            onProfileChange({
+              drivingThresholdKNPerM: e.target.value,
+              tensionToleranceKPa: tension,
+            });
             setEvaluation(null);
             onResult(null);
           }}
@@ -78,14 +81,18 @@ export function FelleniusPanel({
           value={tension}
           onChange={(e) => {
             setTension(e.target.value);
+            onProfileChange({
+              drivingThresholdKNPerM: driving,
+              tensionToleranceKPa: e.target.value,
+            });
             setEvaluation(null);
             onResult(null);
           }}
         />
       </label>
       <p className="hint">
-        Informe valores não negativos. Zero aplica corte estrito. Limiares
-        válidos somente nesta sessão; não são critérios normativos.
+        Informe valores não negativos. Zero aplica corte estrito. Os limiares
+        são salvos neste caso de análise e não são critérios normativos.
       </p>
       {!selected && (
         <p>Selecione Fellenius nos métodos do caso e aplique a alteração.</p>
@@ -93,7 +100,7 @@ export function FelleniusPanel({
       <button
         className="secondary"
         type="button"
-        disabled={!selected || mechanics.status !== "prepared"}
+        disabled={!selected || mechanics?.status !== "prepared"}
         onClick={calculate}
       >
         Calcular Fellenius

@@ -303,7 +303,7 @@ describe("Conferência das entradas de casos", () => {
     expect(projectSchema.safeParse(p).success).toBe(false);
   });
 });
-describe("Migração para v4", () => {
+describe("Migração para v5", () => {
   const legacy = () =>
     JSON.parse(
       readFileSync(
@@ -319,7 +319,7 @@ describe("Migração para v4", () => {
       old.sections[0].circle = { x: 10, y: 20, radius: 5 };
       const { project, migrated } = readProject(JSON.stringify(old));
       expect(migrated).toBe(true);
-      expect(project).toMatchObject({ ...old, version: 4, analysisCases: [] });
+      expect(project).toMatchObject({ ...old, version: 5, analysisCases: [] });
     },
   );
   it("v3 preserva integralmente dados, inativos e pendências, acrescentando lista vazia", () => {
@@ -330,11 +330,11 @@ describe("Migração para v4", () => {
     const old = { ...data, version: 3 };
     const result = readProject(JSON.stringify(old));
     expect(result).toEqual({
-      project: { ...old, version: 4, analysisCases: [] },
+      project: { ...old, version: 5, analysisCases: [] },
       migrated: true,
     });
   });
-  it("v4 não descarta campo desconhecido de caso nem aceita referência ausente", () => {
+  it("v5 não descarta campo desconhecido de caso nem aceita referência ausente", () => {
     const { p, c } = fixture();
     const data = JSON.parse(serializeProject(p));
     data.analysisCases[0].solverResult = 1.5;

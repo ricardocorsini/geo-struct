@@ -1,3 +1,8 @@
+import {
+  withGeometry,
+  withProfile,
+  felleniusProfile,
+} from "../fixtures/numerical-profile";
 import { expect, test, type Page } from "@playwright/test";
 import { addAnalysisCase } from "../../src/domain/analysis";
 import { serializeProject } from "../../src/domain/model";
@@ -52,7 +57,9 @@ test("calcula e inspeciona na janela mínima, exige limiares e preserva o arquiv
   await dialog
     .getByRole("button", { name: "Fechar janela", exact: true })
     .click();
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(
+    withProfile(withGeometry(p), { fellenius: felleniusProfile }),
+  );
   await page.getByLabel("Limiar motriz τD (kN/m)", { exact: true }).fill("1e6");
   await expect(fs(page)).toHaveCount(0);
   await page
@@ -68,7 +75,9 @@ test("calcula e inspeciona na janela mínima, exige limiares e preserva o arquiv
   await prepare(page, "1,5");
   await calculate(page);
   await expect(fs(page)).toBeVisible();
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(
+    withProfile(withGeometry(p, 1.5), { fellenius: felleniusProfile }),
+  );
   await page.locator("input[type=file]").setInputFiles({
     name: "fellenius.geo.json",
     mimeType: "application/json",
@@ -157,7 +166,13 @@ test("método selecionado e casos isolam resultado, sentido e resistência nula"
   await prepare(page);
   await calculate(page);
   await expect(fs(page)).toBeVisible();
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(
+    withProfile(
+      withGeometry(p, 3, [0, 1, 2]),
+      { fellenius: felleniusProfile },
+      [0, 1],
+    ),
+  );
 });
 
 test("resistência nula é FS zero destacado; tração mantém diagnósticos sem FS", async ({
@@ -186,6 +201,10 @@ test("resistência nula é FS zero destacado; tração mantém diagnósticos sem
     mimeType: "application/json",
     buffer: Buffer.from(serializeProject(wet)),
   });
+  await page
+    .getByRole("dialog", { name: "Salvar alterações?", exact: true })
+    .getByRole("button", { name: "Descartar alterações", exact: true })
+    .click();
   await expect(
     page.getByRole("button", { name: "Caso de tração", exact: true }),
   ).toBeVisible();

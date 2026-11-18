@@ -1,5 +1,14 @@
 # Histórico
 
+## Em desenvolvimento
+
+### Perfil de cálculo por caso
+
+- Formato `geostruct/5` com `numericalProfile` por caso. Geometria, Fellenius, Bishop e busca conservam suas configurações ao salvar, reabrir, alternar modos/métodos, duplicar e desfazer/refazer.
+- Perfis parciais guardam campos nulos como pendências explícitas. Rascunhos inválidos permanecem protegidos na interface. Resultados e prévias continuam na sessão.
+- Leitura de v1 a v4 com validação do contrato original antes da migração. Casos de v4 recebem perfil vazio, conservando a abertura de 3° já usada pela preparação geométrica; os demais parâmetros precisam ser informados.
+- Os perfis ilustrativos preenchidos do projeto padrão passam a integrar o arquivo salvo.
+
 ## 0.2.0 — 2026-11-18
 
 Primeira distribuição desktop com análise circular de taludes. Instale ou atualize pelo Struct Launcher. Os arquivos de projeto continuam no formato `geostruct/4`.

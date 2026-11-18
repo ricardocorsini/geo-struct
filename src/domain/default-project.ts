@@ -30,6 +30,15 @@ export function defaultProject(): Project {
     direction: "left-to-right",
     methods: ["fellenius", "bishop"],
     surfaceMode: "search",
+    numericalProfile: {
+      geometry: { ...DEFAULT_PROJECT_PROFILE.geometry },
+      fellenius: { ...DEFAULT_PROJECT_PROFILE.equilibrium },
+      bishop: {
+        ...DEFAULT_PROJECT_PROFILE.equilibrium,
+        ...DEFAULT_PROJECT_PROFILE.bishop,
+      },
+      search: structuredClone(DEFAULT_PROJECT_PROFILE),
+    },
     waterCondition: "section",
     loadCondition: "section",
     fixedCircle: { x: 32, y: 32, radius: 25 },

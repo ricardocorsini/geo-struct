@@ -1,3 +1,4 @@
+import { withGeometry } from "../fixtures/numerical-profile";
 import { expect, test, type Page } from "@playwright/test";
 import { addAnalysisCase } from "../../src/domain/analysis";
 import { newProject, type Project } from "../../src/domain/model";
@@ -153,7 +154,7 @@ test("inspeciona entrada mecânica na janela mínima, respeita rascunho e não g
   await expect(row.getByRole("cell").nth(11)).toHaveText("5");
   expect((await dialog.boundingBox())!.width).toBeLessThanOrEqual(960);
   await close(page);
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p, 2.8));
   await page
     .getByLabel("Abertura máxima por fatia (°)", { exact: true })
     .fill("1,4");
@@ -161,7 +162,7 @@ test("inspeciona entrada mecânica na janela mínima, respeita rascunho e não g
   await prepare(page, "1,4");
   expect(await page.locator("[data-slice]").count()).toBeGreaterThan(27);
   await expect(panel.getByLabel("Entrada mecânica preparada")).toBeVisible();
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p, 1.4));
   await page.locator("input[type=file]").setInputFiles({
     name: "mecanica.geo.json",
     mimeType: "application/json",
@@ -221,7 +222,7 @@ test("alterar modo e desfazer/refazer atualizam ue sem apagar u, W ou a origem",
     "ue para resistência = 5 kPa",
   );
   await close(page);
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p, 2.8));
   await page.getByRole("tab", { name: "Geometria", exact: true }).click();
   await page.getByRole("button", { name: "Refazer", exact: true }).click();
   await selectCase(page);
@@ -235,7 +236,7 @@ test("alterar modo e desfazer/refazer atualizam ue sem apagar u, W ou a origem",
   );
   await close(page);
   p.materials[0].mode = "total";
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p, 2.8));
 });
 
 test("coesão ausente bloqueia consolidação, preserva outras inspeções e aceita zero informado", async ({
@@ -268,7 +269,7 @@ test("coesão ausente bloqueia consolidação, preserva outras inspeções e ace
     dialog.getByRole("table", { name: "Fatias geométricas", exact: true }),
   ).toBeVisible();
   await close(page);
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p, 2.8));
   await page.getByRole("button", { name: "Solo da base", exact: true }).click();
   await page.getByLabel("Coesão c′ (kPa)", { exact: true }).fill("0");
   await page.getByRole("button", { name: "Aplicar", exact: true }).click();
@@ -338,5 +339,5 @@ test("casos isolam direção e água; sentido ausente mantém as preparações i
     "Ordem 1 · Fatia original 1",
   );
   await close(page);
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p, 2.8, [0, 1, 2]));
 });

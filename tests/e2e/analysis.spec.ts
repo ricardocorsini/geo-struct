@@ -128,7 +128,7 @@ test("cria caso explícito copiando círculo de tentativa, salva e relata sem mo
   await expect(report).toContainText(
     "Verificação da crista · somente entradas",
   );
-  await expect(report).toContainText("geostruct/4");
+  await expect(report).toContainText("geostruct/5");
   await expect(report).toContainText("Bishop Simplificado");
 });
 
@@ -427,7 +427,7 @@ test("recuperação v3 conserva todos os dados e mantém casos vazios até cria�
   await page.goto("/");
   await page.getByRole("button", { name: /Recuperar trabalho local/ }).click();
   const saved = await save(page);
-  expect(saved).toEqual({ ...old, version: 4, analysisCases: [] });
+  expect(saved).toEqual({ ...old, version: 5, analysisCases: [] });
   const dialog = await manager(page);
   await expect(dialog).toContainText("Nenhum caso cadastrado");
 });
@@ -462,7 +462,7 @@ test("entrada do núcleo usa dados aplicados e acompanha condições, arquivo e 
   const saved = await save(page);
   expect(saved.sections).toEqual(p.sections);
   expect(saved).not.toHaveProperty("snapshot");
-  expect(saved.version).toBe(4);
+  expect(saved.version).toBe(5);
 
   await page.getByRole("tab", { name: "Geometria", exact: true }).click();
   await page.getByRole("button", { name: "Desfazer", exact: true }).click();

@@ -1,3 +1,4 @@
+import { withGeometry } from "../fixtures/numerical-profile";
 import { test, expect, type Page } from "@playwright/test";
 import { addAnalysisCase } from "../../src/domain/analysis";
 import { newProject, type Project } from "../../src/domain/model";
@@ -51,7 +52,10 @@ async function selectCase(page: Page) {
   await page
     .getByRole("button", { name: "Círculo dos pesos", exact: true })
     .click();
-  await page.locator(".fixed-circle-preview > summary").click();
+  if (
+    (await page.locator(".fixed-circle-preview").getAttribute("open")) === null
+  )
+    await page.locator(".fixed-circle-preview > summary").click();
   return page.getByRole("region", {
     name: "Geometria do círculo fixo",
     exact: true,
@@ -167,7 +171,7 @@ test("consulta pesos, γ e origens por fatia, sem alterar o projeto ou misturar 
   await dialog
     .getByRole("button", { name: "Fechar janela", exact: true })
     .click();
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p));
   await page.getByRole("button", { name: "Outro caso", exact: true }).click();
   await expect(
     page.getByLabel("Peso próprio total", { exact: true }),
@@ -192,7 +196,7 @@ test("consulta pesos, γ e origens por fatia, sem alterar o projeto ou misturar 
   await dialog
     .getByRole("button", { name: "Fechar janela", exact: true })
     .click();
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p, 1.5));
 });
 
 test("editar γ invalida os pesos e desfazer/refazer recupera as contribuições correspondentes", async ({
@@ -223,7 +227,7 @@ test("editar γ invalida os pesos e desfazer/refazer recupera as contribuições
   await expect(
     panel.getByLabel("Peso próprio total", { exact: true }),
   ).toContainText("74,375499 kN/m");
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p));
   await page.getByRole("tab", { name: "Geometria", exact: true }).click();
   await page.getByRole("button", { name: "Refazer", exact: true }).click();
   await selectCase(page);
@@ -232,7 +236,7 @@ test("editar γ invalida os pesos e desfazer/refazer recupera as contribuições
     panel.getByLabel("Peso próprio total", { exact: true }),
   ).toContainText("75,175499 kN/m");
   p.materials[1].gamma = 22;
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p));
 });
 
 test("γ ausente bloqueia somente pesos e pode ser completado sem perder áreas", async ({
@@ -276,7 +280,7 @@ test("γ ausente bloqueia somente pesos e pode ser completado sem perder áreas"
   await dialog
     .getByRole("button", { name: "Fechar janela", exact: true })
     .click();
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p));
   await page
     .getByRole("button", { name: "Solo da inclusão", exact: true })
     .click();

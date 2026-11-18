@@ -14,6 +14,7 @@ import {
   type SearchLocation,
 } from "../core/search-grid";
 import { parseNumber } from "../domain/geometry";
+import type { NumericalProfile } from "../domain/model";
 import { startSearchWorker } from "../lib/circular-search-client";
 import {
   CircularSearchResults,
@@ -71,14 +72,18 @@ export function CircularSearchPanel({
   dirty,
   onPreview,
   initialProfile,
+  onProfileChange,
 }: {
   preparation: InputPreparation;
   dirty: boolean;
   onPreview: (overlay: SearchOverlay | null) => void;
-  initialProfile?: CircularSearchProfile;
+  initialProfile: NumericalProfile["search"];
+  onProfileChange: (fields: Record<Field, string>) => void;
 }) {
+  const [hasSavedProfile] = useState(
+    () => initialProfile.geometry.toleranceM !== null,
+  );
   const [values, setValues] = useState(() => {
-    if (!initialProfile) return initial;
     const { geometry, equilibrium, bishop, nearTieTolerance } = initialProfile;
     const parameters = {
       ...geometry,
@@ -88,8 +93,7 @@ export function CircularSearchPanel({
     };
     const values = { ...initial };
     for (const key of Object.keys(values) as Field[]) {
-      const parameter = parameters[key];
-      if (parameter !== undefined) values[key] = String(parameter);
+      values[key] = String(parameters[key] ?? "");
     }
     return values;
   });
@@ -231,7 +235,9 @@ export function CircularSearchPanel({
         value={values[key]}
         disabled={dirty || running}
         onChange={(e) => {
-          setValues((before) => ({ ...before, [key]: e.target.value }));
+          const next = { ...values, [key]: e.target.value };
+          setValues(next);
+          onProfileChange(next);
           reset();
         }}
         onKeyDown={(e) => {
@@ -272,7 +278,7 @@ export function CircularSearchPanel({
   return (
     <details
       className="circular-search-panel"
-      open={initialProfile ? true : undefined}
+      open={hasSavedProfile ? true : undefined}
     >
       <summary>Executar busca circular</summary>
       <section aria-label="Busca circular">
@@ -285,7 +291,7 @@ export function CircularSearchPanel({
               Até {MAX_SEARCH_CANDIDATES.toLocaleString("pt-BR")} círculos por
               execução.
             </p>
-            {!initialProfile && settings}
+            {!hasSavedProfile && settings}
             {grid?.status === "ready" && (
               <p aria-label="Tamanho da malha">
                 <strong>{grid.grid.total} círculos</strong> ·{" "}
@@ -321,9 +327,9 @@ export function CircularSearchPanel({
                 </button>
               )}
             </div>
-            {initialProfile && (
+            {hasSavedProfile && (
               <details className="search-profile">
-                <summary>Perfil de cálculo do exemplo</summary>
+                <summary>Perfil de cálculo do caso</summary>
                 {settings}
               </details>
             )}

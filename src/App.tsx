@@ -28,6 +28,7 @@ import {
   type Selection,
   type Tool,
   type Point,
+  type NumericalProfile,
 } from "./domain/model";
 import {
   contourTarget,
@@ -90,10 +91,7 @@ import { StartScreen } from "./components/StartScreen";
 import { Report } from "./components/Report";
 import { Materials, MaterialAssignment } from "./components/Materials";
 import { prepareCoreInput } from "./domain/core-input";
-import {
-  defaultProject,
-  DEFAULT_PROJECT_PROFILE,
-} from "./domain/default-project";
+import { defaultProject } from "./domain/default-project";
 import type { FixedCirclePreparation } from "./core/fixed-circle";
 import type { GeometryFields } from "./components/FixedCirclePreview";
 import type { SearchOverlay } from "./components/CircularSearchPanel";
@@ -103,10 +101,6 @@ type Question = {
   message: string;
   choices: { value: string; label: string; primary?: boolean }[];
   resolve: (v: string) => void;
-};
-const initialDefaultGeometry: GeometryFields = {
-  tolerance: String(DEFAULT_PROJECT_PROFILE.geometry.toleranceM),
-  angle: String(DEFAULT_PROJECT_PROFILE.geometry.maxArcDegrees),
 };
 function readPreference(key: string, fallback: string) {
   try {
@@ -149,13 +143,11 @@ export default function App() {
   const [saved, setSaved] = useState(""),
     [filePath, setFilePath] = useState<string | null>(null),
     [busy, setBusy] = useState(false);
-  const [geometryFields, setGeometryFields] = useState<GeometryFields>({
-    tolerance: "",
-    angle: "3",
-  });
-  const [defaultCaseIds, setDefaultCaseIds] = useState<string[]>([]);
-  const [defaultGeometryFields, setDefaultGeometryFields] =
-    useState<GeometryFields>(initialDefaultGeometry);
+  const [geometryDraft, setGeometryDraft] = useState<{
+    caseId: string;
+    epoch: number;
+    values: GeometryFields;
+  } | null>(null);
   const [slicePreview, setSlicePreview] =
     useState<FixedCirclePreparation | null>(null);
   const [searchOverlay, setSearchOverlay] = useState<SearchOverlay | null>(
@@ -203,19 +195,32 @@ export default function App() {
         c.id === selection.id &&
         c.sectionId === section?.id,
     ) ?? null;
-  const defaultCase =
-    selectedCase !== null && defaultCaseIds.includes(selectedCase.id);
+  const geometryFields: GeometryFields =
+    geometryDraft?.caseId === selectedCase?.id &&
+    geometryDraft?.epoch === inspectorEpoch
+      ? geometryDraft.values
+      : {
+          tolerance: String(
+            selectedCase?.numericalProfile.geometry.toleranceM ?? "",
+          ),
+          angle: String(
+            selectedCase?.numericalProfile.geometry.maxArcDegrees ?? "",
+          ),
+        };
   const diagnostics = useMemo(
     () => (project ? diagnose(project) : []),
     [project],
   );
-  const preparedCase = useMemo(
+  const preparation = useMemo(
     () =>
       project && selectedCase
         ? prepareCoreInput(project, selectedCase.id)
         : null,
     [project, selectedCase],
   );
+  // Alterar só o perfil conserva a entrada mecânica e as inspeções já preparadas.
+  const preparationRevision = JSON.stringify(preparation);
+  const preparedCase = useMemo(() => preparation, [preparationRevision]);
   const currentSlices =
     preparedCase?.snapshot &&
     slicePreview?.inputRevision === preparedCase.snapshot.revision
@@ -369,7 +374,7 @@ export default function App() {
     migrated = false,
   ) => {
     setH(history(p));
-    setDefaultCaseIds([]);
+    setGeometryDraft(null);
     setSectionId(p.sections[0].id);
     setSelection({ kind: "terrain" });
     setTool("select");
@@ -385,13 +390,29 @@ export default function App() {
     setDialog(null);
     if (migrated)
       notify(
-        "Projeto de versão anterior aberto com os dados preservados. O próximo salvamento usará a versão 4; use Salvar como para conservar o arquivo original.",
+        "Projeto de versão anterior aberto com os dados preservados. O próximo salvamento usará a versão 5; use Salvar como para conservar o arquivo original. Complete o perfil de cálculo de cada caso antes de calcular.",
       );
   };
   const apply = (p: Project) => {
     setH((prev) => (prev ? commit(prev, p) : history(p)));
     setInspectorEpoch((n) => n + 1);
     setDraftDirty(false);
+  };
+  const applyNumericalProfile = (profile: NumericalProfile) => {
+    if (!selectedCase) return;
+    const caseId = selectedCase.id;
+    setH((previous) => {
+      if (!previous) return previous;
+      const next = {
+        ...previous.present,
+        analysisCases: previous.present.analysisCases.map((analysisCase) =>
+          analysisCase.id === caseId
+            ? { ...analysisCase, numericalProfile: profile }
+            : analysisCase,
+        ),
+      };
+      return commit(previous, next);
+    });
   };
   const select = async (s: Selection) => {
     if (!(await guardDraft())) return;
@@ -811,8 +832,6 @@ export default function App() {
       if (await guardProject()) {
         const sample = defaultProject();
         openProject(sample, null, false);
-        setDefaultCaseIds(sample.analysisCases.map((c) => c.id));
-        setDefaultGeometryFields(initialDefaultGeometry);
         setSelection({ kind: "case", id: sample.analysisCases[0].id });
         setTab("Análise");
         notify(
@@ -948,6 +967,8 @@ export default function App() {
       setH((prev) => (prev ? (a === "undo" ? undo(prev) : redo(prev)) : prev));
       setInspectorEpoch((n) => n + 1);
       setSelection({ kind: "terrain" });
+      setSlicePreview(null);
+      setSearchOverlay(null);
       return;
     }
     const p = structuredClone(project);
@@ -1308,18 +1329,21 @@ export default function App() {
                   onDrawCircle={() => void selectTool("case-circle")}
                   onBase={() => void select({ kind: "terrain" })}
                   onSearchPreview={setSearchOverlay}
-                  initialProfile={
-                    defaultCase ? DEFAULT_PROJECT_PROFILE : undefined
-                  }
+                  onProfileApply={applyNumericalProfile}
+                  onDiscard={() => {
+                    setDraftDirty(false);
+                    setInspectorEpoch((epoch) => epoch + 1);
+                  }}
                   geometryPreview={{
                     preparation: preparedCase!,
-                    values: defaultCase
-                      ? defaultGeometryFields
-                      : geometryFields,
+                    values: geometryFields,
                     result: currentSlices,
                     onChange: (values) => {
-                      if (defaultCase) setDefaultGeometryFields(values);
-                      else setGeometryFields(values);
+                      setGeometryDraft({
+                        caseId: selectedCase.id,
+                        epoch: inspectorEpoch,
+                        values,
+                      });
                       setSlicePreview(null);
                     },
                     onPrepare: setSlicePreview,

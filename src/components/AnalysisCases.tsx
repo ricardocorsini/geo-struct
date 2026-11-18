@@ -1,9 +1,10 @@
 import { auditProject } from "../domain/audit";
-import type { CircularSearchProfile } from "../core/circular-search";
 import { useEffect, useState } from "react";
 import { Check, RotateCcw } from "lucide-react";
 import {
   projectSchema,
+  numericalProfileSchema,
+  type NumericalProfile,
   type AnalysisCase,
   type Project,
   type Section,
@@ -184,7 +185,8 @@ export function CaseInspector({
   onBase,
   geometryPreview,
   onSearchPreview,
-  initialProfile,
+  onProfileApply,
+  onDiscard,
 }: {
   project: Project;
   section: Section;
@@ -193,9 +195,13 @@ export function CaseInspector({
   onDirty: (v: boolean) => void;
   onDrawCircle: () => void;
   onBase: () => void;
-  geometryPreview: Omit<FixedCirclePreviewProps, "dirty">;
+  geometryPreview: Omit<
+    FixedCirclePreviewProps,
+    "dirty" | "initialProfile" | "onProfileChange"
+  >;
   onSearchPreview: (overlay: SearchOverlay | null) => void;
-  initialProfile?: CircularSearchProfile;
+  onProfileApply: (profile: NumericalProfile) => void;
+  onDiscard: () => void;
 }) {
   const initial: Record<string, string> = {
     name: c.name,
@@ -216,9 +222,82 @@ export function CaseInspector({
     [loadIds, setLoadIds] = useState(c.loadIds),
     [dirty, setDirty] = useState(false),
     [error, setError] = useState("");
+  const [profileErrors, setProfileErrors] = useState<Record<string, string>>(
+    {},
+  );
+  const invalidProfile = Object.values(profileErrors).some(Boolean);
   useEffect(() => {
-    onDirty(dirty);
-  }, [dirty, onDirty]);
+    onDirty(dirty || invalidProfile);
+  }, [dirty, invalidProfile, onDirty]);
+  const updateProfile = (
+    group: keyof NumericalProfile,
+    fields: Record<string, string>,
+  ) => {
+    const numbers: Record<string, number | null> = {};
+    for (const [key, text] of Object.entries(fields)) {
+      const value = text.trim() ? parseNumber(text) : null;
+      if (text.trim() && value === null) {
+        setProfileErrors((before) => ({
+          ...before,
+          [group]: "Informe números válidos no perfil de cálculo.",
+        }));
+        return;
+      }
+      numbers[key] = value;
+    }
+    const next = structuredClone(c.numericalProfile);
+    if (group === "search") {
+      Object.assign(next.search.geometry, {
+        toleranceM: numbers.toleranceM,
+        maxArcDegrees: numbers.maxArcDegrees,
+      });
+      Object.assign(next.search.equilibrium, {
+        drivingThresholdKNPerM: numbers.drivingThresholdKNPerM,
+        tensionToleranceKPa: numbers.tensionToleranceKPa,
+      });
+      Object.assign(next.search.bishop, {
+        initialFactor: numbers.initialFactor,
+        residualTolerance: numbers.residualTolerance,
+        maxIterations: numbers.maxIterations,
+        singularityThreshold: numbers.singularityThreshold,
+      });
+      next.search.nearTieTolerance = numbers.nearTieTolerance;
+    } else {
+      Object.assign(next[group], numbers);
+    }
+    const parsed = numericalProfileSchema.safeParse(next);
+    setProfileErrors((before) => ({
+      ...before,
+      [group]: parsed.success
+        ? ""
+        : "Corrija os valores do perfil conforme os limites indicados nos campos.",
+    }));
+    if (parsed.success) onProfileApply(parsed.data);
+  };
+  const profile = c.numericalProfile;
+  const requiredProfileValues =
+    c.surfaceMode === "search"
+      ? [
+          ...Object.values(profile.search.geometry),
+          ...Object.values(profile.search.equilibrium),
+          profile.search.nearTieTolerance,
+          ...(c.methods.includes("bishop")
+            ? Object.values(profile.search.bishop)
+            : []),
+        ]
+      : [
+          ...Object.values(profile.geometry),
+          ...(c.methods.includes("fellenius")
+            ? Object.values(profile.fellenius)
+            : []),
+          ...(c.methods.includes("bishop")
+            ? Object.values(profile.bishop)
+            : []),
+        ];
+  const profileIncomplete = requiredProfileValues.some(
+    (value) => value === null,
+  );
+  const [showCalculationFirst] = useState(() => !profileIncomplete);
   const change = (key: string, value: string) => {
     setValues((v) => ({ ...v, [key]: value }));
     setDirty(true);
@@ -275,6 +354,10 @@ export function CaseInspector({
   );
   const apply = () => {
     try {
+      if (invalidProfile)
+        throw new Error(
+          "Corrija ou descarte o perfil de cálculo em edição antes de aplicar o caso.",
+        );
       const next = structuredClone(project),
         edited = next.analysisCases.find((a) => a.id === c.id)!;
       Object.assign(edited, {
@@ -322,20 +405,31 @@ export function CaseInspector({
         preparation={geometryPreview.preparation}
         dirty={dirty}
         onPreview={onSearchPreview}
-        initialProfile={initialProfile}
+        initialProfile={profile.search}
+        onProfileChange={(fields) => updateProfile("search", fields)}
       />
     ) : (
       <FixedCirclePreview
         {...geometryPreview}
         dirty={dirty}
-        initialProfile={initialProfile}
+        initialProfile={profile}
+        onProfileChange={(group, fields) => updateProfile(group, fields)}
+        onChange={(fields) => {
+          geometryPreview.onChange(fields);
+          updateProfile("geometry", {
+            toleranceM: fields.tolerance,
+            maxArcDegrees: fields.angle,
+          });
+        }}
       />
     );
   return (
     <aside className="inspector" aria-label="Propriedades do caso">
       <div className="panel-heading">
         <span>CASO DE ANÁLISE</span>
-        {dirty && <span className="draft-badge">Em edição</span>}
+        {(dirty || invalidProfile) && (
+          <span className="draft-badge">Em edição</span>
+        )}
       </div>
       <form
         className="inspector-form"
@@ -350,7 +444,19 @@ export function CaseInspector({
             Seção: {section.name}. Alterar a geometria ou os materiais da seção
             afeta todos os seus casos.
           </p>
-          {initialProfile && calculationPanel}
+          {invalidProfile && (
+            <p className="form-error" role="alert">
+              {Object.values(profileErrors).filter(Boolean).join(" ")} Corrija
+              os campos antes de salvar ou trocar de caso.
+            </p>
+          )}
+          {profileIncomplete && (
+            <p className="hint" role="status">
+              Perfil de cálculo incompleto. Informe os parâmetros do modo e dos
+              métodos selecionados antes de calcular.
+            </p>
+          )}
+          {showCalculationFirst && calculationPanel}
           {field("name", "Nome do caso")}
           {textField("description", "Hipóteses do caso")}
           {select("direction", "Direção de deslizamento", [
@@ -504,7 +610,7 @@ export function CaseInspector({
             prepared={geometryPreview.preparation}
             dirty={dirty}
           />
-          {!initialProfile && calculationPanel}
+          {!showCalculationFirst && calculationPanel}
           <button className="text-button" type="button" onClick={onBase}>
             Voltar à seção base
           </button>
@@ -518,14 +624,8 @@ export function CaseInspector({
           <button
             className="secondary"
             type="button"
-            disabled={!dirty}
-            onClick={() => {
-              setValues(initial);
-              setMethods(c.methods);
-              setLoadIds(c.loadIds);
-              setDirty(false);
-              setError("");
-            }}
+            disabled={!dirty && !invalidProfile}
+            onClick={onDiscard}
           >
             <RotateCcw size={14} />
             Descartar

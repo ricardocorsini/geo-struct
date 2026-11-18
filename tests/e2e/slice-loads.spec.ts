@@ -1,3 +1,4 @@
+import { withGeometry } from "../fixtures/numerical-profile";
 import { expect, test, type Page } from "@playwright/test";
 import { addAnalysisCase } from "../../src/domain/analysis";
 import { newProject, type Project } from "../../src/domain/model";
@@ -158,7 +159,7 @@ test("inspeciona forças, pontos e braços com sinais na janela mínima, sem per
   ).toBeAttached();
   expect((await dialog.boundingBox())!.width).toBeLessThanOrEqual(960);
   await close(page);
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p));
   await page
     .getByLabel("Abertura máxima por fatia (°)", { exact: true })
     .fill("1,5");
@@ -177,6 +178,10 @@ test("inspeciona forças, pontos e braços com sinais na janela mínima, sem per
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(p)),
   });
+  await page
+    .getByRole("dialog", { name: "Salvar alterações?", exact: true })
+    .getByRole("button", { name: "Descartar alterações", exact: true })
+    .click();
   await selectCase(page);
   await expect(panel.getByLabel("Sobrecargas preparadas")).toHaveCount(0);
   await prepare(page);
@@ -216,7 +221,7 @@ test("edição de q e desfazer/refazer invalidam resultantes preservando peso e 
   await expect(panel.getByLabel("Sobrecargas preparadas")).toContainText(
     "40 kN/m",
   );
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p));
   await page.getByRole("tab", { name: "Geometria", exact: true }).click();
   await page.getByRole("button", { name: "Refazer", exact: true }).click();
   await selectCase(page);
@@ -225,7 +230,7 @@ test("edição de q e desfazer/refazer invalidam resultantes preservando peso e 
     "60 kN/m",
   );
   p.sections[0].loads[0].q = 30;
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p));
 });
 
 test("q ausente não vira zero; completar com zero conserva largura e origem", async ({
@@ -252,7 +257,7 @@ test("q ausente não vira zero; completar com zero conserva largura e origem", a
     }),
   ).toHaveCount(0);
   await close(page);
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p));
   await page
     .getByRole("button", { name: "Faixa esquerda", exact: true })
     .click();
@@ -354,5 +359,5 @@ test("rascunho e condições próprias isolam faixas, ausência explícita e sen
     "Sentido não definido",
   );
   await close(page);
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p, 3, [0, 1, 2]));
 });

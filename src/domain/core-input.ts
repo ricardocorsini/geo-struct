@@ -61,7 +61,7 @@ export function prepareCoreInput(
     contract: "geostruct-input/1",
     stage: "inputs-only",
     origin: {
-      projectFormat: "geostruct/4",
+      projectFormat: "geostruct/5",
       project: { id: p.id, name: p.name },
       section: { id: section.id, name: section.name },
       analysisCase: { id: c.id, name: c.name },

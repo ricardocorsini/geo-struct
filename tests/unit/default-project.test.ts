@@ -2,6 +2,7 @@ import { expect, it } from "vitest";
 import {
   evaluateSearchCircle,
   runCircularSearch,
+  type CircularSearchProfile,
 } from "../../src/core/circular-search";
 import { prepareCoreInput } from "../../src/domain/core-input";
 import {
@@ -15,14 +16,27 @@ it("abre o talude padrão com malha calculável e um círculo comparável, com �
   const [search, fixed] = project.analysisCases;
   const serialized = serializeProject(project);
   expect(readProject(serialized)).toEqual({ project, migrated: false });
+  const storedProfile = search.numericalProfile.search;
+  expect(storedProfile).toEqual(DEFAULT_PROJECT_PROFILE);
 
   const preparation = prepareCoreInput(project, search.id);
-  const result = runCircularSearch(preparation, DEFAULT_PROJECT_PROFILE);
+  const result = runCircularSearch(
+    preparation,
+    storedProfile as CircularSearchProfile,
+  );
   if (result.status !== "completed") throw new Error(result.diagnostic.message);
   expect(result.grid.total).toBe(27);
   expect(result.rankings).toHaveLength(2);
   for (const ranking of result.rankings)
     expect(ranking.minimum?.factorOfSafety).toBeGreaterThan(0);
+  const reopened = readProject(serialized).project;
+  const reopenedCase = reopened.analysisCases[0];
+  expect(
+    runCircularSearch(
+      prepareCoreInput(reopened, reopenedCase.id),
+      reopenedCase.numericalProfile.search as CircularSearchProfile,
+    ),
+  ).toEqual(result);
 
   const candidate = result.candidates.find(
     ({ location: { circle } }) =>

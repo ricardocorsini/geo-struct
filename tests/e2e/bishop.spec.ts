@@ -1,3 +1,9 @@
+import {
+  withGeometry,
+  withProfile,
+  felleniusProfile,
+  bishopProfile,
+} from "../fixtures/numerical-profile";
 import { expect, test, type Page } from "@playwright/test";
 import {
   fixture,
@@ -92,7 +98,12 @@ test("Bishop calcula e inspeciona o perfil, trajetória e fatias na janela míni
   await dialog
     .getByRole("button", { name: "Fechar janela", exact: true })
     .click();
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(
+    withProfile(withGeometry(p), {
+      fellenius: felleniusProfile,
+      bishop: bishopProfile,
+    }),
+  );
   await field(page, "Tolerância do resíduo τF").fill("1e-9");
   await expect(fs(page)).toHaveCount(0);
   await expect(diff(page)).toHaveCount(0);
@@ -115,7 +126,12 @@ test("Bishop calcula e inspeciona o perfil, trajetória e fatias na janela míni
   await prepare(page, "1.5");
   await both(page);
   await expect(diff(page)).toBeVisible();
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(
+    withProfile(withGeometry(p, 1.5), {
+      fellenius: felleniusProfile,
+      bishop: bishopProfile,
+    }),
+  );
   await page.locator("input[type=file]").setInputFiles({
     name: "bishop.geo.json",
     mimeType: "application/json",
@@ -213,7 +229,9 @@ test("Bishop funciona sozinho e isola casos, sentido e resistência nula", async
   await prepare(page);
   await bishop(page);
   await expect(fs(page)).toBeVisible();
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(
+    withProfile(withGeometry(p, 3, [0, 1]), { bishop: bishopProfile }, [0, 1]),
+  );
   p = model();
   p.materials[0].friction = 0;
   await page.locator("input[type=file]").setInputFiles({

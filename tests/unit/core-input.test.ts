@@ -46,7 +46,7 @@ describe("contrato de entrada do núcleo", () => {
     expect(result.status).toBe("collected");
     const input = result.snapshot!.input;
     expect(input.origin).toEqual({
-      projectFormat: "geostruct/4",
+      projectFormat: "geostruct/5",
       project: { id: p.id, name: p.name },
       section: { id: s.id, name: s.name },
       analysisCase: { id: c.id, name: c.name },

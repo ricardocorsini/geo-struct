@@ -1,3 +1,4 @@
+import { withProfile, searchProfile } from "../fixtures/numerical-profile";
 import { expect, test, type Page } from "@playwright/test";
 import { addAnalysisCase } from "../../src/domain/analysis";
 import { serializeProject, type Project } from "../../src/domain/model";
@@ -22,6 +23,12 @@ async function select(page: Page, name = "Malha de conferência") {
   await page.getByRole("button", { name, exact: true }).click();
   if ((await panel(page).getAttribute("open")) === null)
     await panel(page).locator(":scope > summary").click();
+  const settings = panel(page).locator(".search-profile");
+  if (
+    (await settings.count()) &&
+    (await settings.getAttribute("open")) === null
+  )
+    await settings.locator(":scope > summary").click();
 }
 async function open(page: Page, p: Project) {
   await page.goto("/");
@@ -145,7 +152,7 @@ test("busca por método, inspeciona descartes e fatias, refina o círculo e pres
     .getByRole("button", { name: "Mostrar fatias no desenho", exact: true })
     .click();
   await expect(page.locator("[data-slice-preview]")).toHaveCount(1);
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withProfile(p, { search: searchProfile }));
   await field(page, "Faixa de quase empate em FS").fill("0");
   await expect(output(page)).toHaveCount(0);
   await expect(page.locator("[data-slice-preview]")).toHaveCount(0);
@@ -202,6 +209,11 @@ test("limite da malha, não convergência independente e invalidação por rascu
   const p = model();
   p.analysisCases[0].search.x = { min: 0, max: 100, step: 1 };
   p.analysisCases[0].search.y = { min: 4, max: 104, step: 1 };
+  // Keep this scenario's undo focused on the grid operation, not profile entry.
+  p.analysisCases[0].numericalProfile.search = structuredClone({
+    ...searchProfile,
+    bishop: { ...searchProfile.bishop, maxIterations: 1 },
+  });
   await open(page, p);
   await field(page, "Tolerância geométrica (m)").fill("1e-8");
   await expect(panel(page).getByRole("alert")).toContainText(
@@ -212,7 +224,14 @@ test("limite da malha, não convergência independente e invalidação por rascu
   await page.getByLabel("Centro Z máximo (m)", { exact: true }).fill("4");
   await expect(panel(page)).toContainText("Aplique ou descarte o rascunho");
   await page.getByRole("button", { name: "Aplicar caso", exact: true }).click();
-  await panel(page).locator(":scope > summary").click();
+  if ((await panel(page).getAttribute("open")) === null)
+    await panel(page).locator(":scope > summary").click();
+  const settings = panel(page).locator(".search-profile");
+  if (
+    (await settings.count()) &&
+    (await settings.getAttribute("open")) === null
+  )
+    await settings.locator(":scope > summary").click();
   await profile(page, { max: "1" });
   await start(page).click();
   await expect(

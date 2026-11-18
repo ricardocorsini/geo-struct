@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { InputPreparation } from "../core/input";
-import type { CircularSearchProfile } from "../core/circular-search";
+import type { NumericalProfile } from "../domain/model";
 import {
   prepareFixedCircleGeometry,
   type CutReason,
@@ -27,7 +27,11 @@ export type FixedCirclePreviewProps = {
   dirty: boolean;
   onChange: (values: GeometryFields) => void;
   onPrepare: (result: FixedCirclePreparation) => void;
-  initialProfile?: Pick<CircularSearchProfile, "equilibrium" | "bishop">;
+  initialProfile: NumericalProfile;
+  onProfileChange: (
+    group: "fellenius" | "bishop",
+    fields: Record<string, string>,
+  ) => void;
 };
 const number = (n: number) =>
   n.toLocaleString("pt-BR", {
@@ -52,8 +56,12 @@ export function FixedCirclePreview({
   onChange,
   onPrepare,
   initialProfile,
+  onProfileChange,
 }: FixedCirclePreviewProps) {
   const [table, setTable] = useState(false);
+  const [hasSavedProfile] = useState(
+    () => initialProfile.geometry.toleranceM !== null,
+  );
   const weights = useMemo(
     () =>
       result?.status === "prepared"
@@ -123,7 +131,7 @@ export function FixedCirclePreview({
   return (
     <details
       className="fixed-circle-preview"
-      open={initialProfile ? true : undefined}
+      open={hasSavedProfile ? true : undefined}
     >
       <summary>Geometria do círculo fixo</summary>
       <section aria-label="Geometria do círculo fixo">
@@ -162,8 +170,8 @@ export function FixedCirclePreview({
           />
         </label>
         <p className="hint">
-          Até 3° por fatia; use um valor menor para refinar. Perfil usado apenas
-          nesta sessão.
+          Até 3° por fatia; use um valor menor para refinar. Os parâmetros são
+          salvos neste caso de análise.
         </p>
         {dirty && (
           <p className="hint">
@@ -272,13 +280,6 @@ export function FixedCirclePreview({
             >
               Inspecionar fatias
             </button>
-            {!dirty && mechanics?.status === "prepared" && (
-              <FixedCircleMethods
-                preparation={preparation}
-                mechanics={mechanics}
-                initialProfile={initialProfile}
-              />
-            )}
           </>
         )}
         {!result && (
@@ -292,6 +293,12 @@ export function FixedCirclePreview({
           base e as parcelas de água. Use os painéis de Fellenius e Bishop para
           avaliar o círculo fixo com limiares explícitos.
         </p>
+        <FixedCircleMethods
+          preparation={preparation}
+          mechanics={dirty ? null : mechanics}
+          initialProfile={initialProfile}
+          onProfileChange={onProfileChange}
+        />
       </section>
       {table && !dirty && result?.status === "prepared" && (
         <Dialog

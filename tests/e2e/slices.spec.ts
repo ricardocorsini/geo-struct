@@ -1,3 +1,4 @@
+import { withGeometry } from "../fixtures/numerical-profile";
 import { test, expect, type Page } from "@playwright/test";
 import { newProject, type Project } from "../../src/domain/model";
 import { addAnalysisCase } from "../../src/domain/analysis";
@@ -31,7 +32,10 @@ async function selectCase(page: Page) {
   await page
     .getByRole("button", { name: "Círculo analítico", exact: true })
     .click();
-  await page.locator(".fixed-circle-preview > summary").click();
+  if (
+    (await page.locator(".fixed-circle-preview").getAttribute("open")) === null
+  )
+    await page.locator(".fixed-circle-preview > summary").click();
   return page.getByRole("region", {
     name: "Geometria do círculo fixo",
     exact: true,
@@ -103,7 +107,7 @@ test("prepara, desenha e inspeciona o segmento circular sem alterar o arquivo", 
   await dialog
     .getByRole("button", { name: "Fechar janela", exact: true })
     .click();
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p));
   await page
     .getByLabel("Abertura máxima por fatia (°)", { exact: true })
     .fill("1,5");
@@ -113,7 +117,7 @@ test("prepara, desenha e inspeciona o segmento circular sem alterar o arquivo", 
     .click();
   await expect(panel).toContainText("50 fatias preparadas");
   await expect(page.locator("[data-slice]")).toHaveCount(50);
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p, 1.5));
 });
 
 test("rascunho não prepara fatias e uma alteração aplicada oculta a geometria antiga", async ({
@@ -129,7 +133,10 @@ test("rascunho não prepara fatias e uma alteração aplicada oculta a geometria
   await expect(page.locator("[data-slice-preview]")).toHaveCount(0);
   await expect(panel).toContainText("Aplique ou descarte o rascunho");
   await page.getByRole("button", { name: "Aplicar caso", exact: true }).click();
-  await page.locator(".fixed-circle-preview > summary").click();
+  if (
+    (await page.locator(".fixed-circle-preview").getAttribute("open")) === null
+  )
+    await page.locator(".fixed-circle-preview > summary").click();
   await expect(panel).not.toContainText("25 fatias preparadas");
   await page
     .getByRole("button", { name: "Preparar fatias", exact: true })
@@ -145,7 +152,7 @@ test("rascunho não prepara fatias e uma alteração aplicada oculta a geometria
     .getByRole("button", { name: "Preparar fatias", exact: true })
     .click();
   await expect(page.locator("[data-slice]")).toHaveCount(25);
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p));
 });
 
 test("alteração compartilhada invalida a prévia e o círculo antigo não passa para outro caso", async ({
@@ -204,7 +211,7 @@ test("perfil inválido e limite operacional produzem diagnóstico sem truncar fa
     "limite operacional de 2000",
   );
   await expect(page.locator("[data-slice-preview]")).toHaveCount(0);
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p, 1e-8));
 });
 
 function inclusionFixture(assigned = true) {
@@ -278,7 +285,7 @@ test("inspeciona áreas e origens por material, preservando o arquivo e os totai
   await dialog
     .getByRole("button", { name: "Fechar janela", exact: true })
     .click();
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p));
   await page
     .getByLabel("Abertura máxima por fatia (°)", { exact: true })
     .fill("1,5");
@@ -298,7 +305,7 @@ test("inspeciona áreas e origens por material, preservando o arquivo e os totai
   await dialog
     .getByRole("button", { name: "Fechar janela", exact: true })
     .click();
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p, 1.5));
 });
 
 test("atribuição acima da base é obrigatória e acompanha aplicar, desfazer e refazer", async ({
@@ -342,7 +349,7 @@ test("atribuição acima da base é obrigatória e acompanha aplicar, desfazer e
     "Atribua material a Região interna",
   );
   await expect(page.locator("[data-slice-preview]")).toHaveCount(0);
-  expect(await save(page)).toEqual(p);
+  expect(await save(page)).toEqual(withGeometry(p));
   await page.getByRole("tab", { name: "Geometria", exact: true }).click();
   await page.getByRole("button", { name: "Refazer", exact: true }).click();
   await selectCase(page);
