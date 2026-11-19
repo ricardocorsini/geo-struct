@@ -23,6 +23,7 @@ Para começar um modelo próprio, use **Novo projeto**. **Explorar um exemplo** 
 - Interface em português, ribbon, árvore de projeto, propriedades laterais, temas claro/escuro e painéis redimensionáveis.
 - Projetos com múltiplas seções; criação e duplicação de seções e materiais compartilhados.
 - Edição gráfica e por tabela: mover, inserir e excluir vértices, mover contornos, copiar e dividir regiões por uma reta.
+- Importação CSV do contorno do terreno ou de uma região, com prévia, escolha de colunas/unidade e confirmação em uma operação de histórico. DXF/DWG continuam fora deste incremento.
 - Interfaces coincidentes de solo acompanham a edição em uma única operação de desfazer/refazer, inclusive com subdivisões distintas nos contornos vizinhos.
 - Captura de vértices, interseções e segmentos; grade configurável (inicialmente 0,5 m), restrição horizontal/vertical, pan e zoom no cursor.
 - Entrada precisa por X/Z, deslocamento relativo ou distância/ângulo, além de medição de distância, desnível e ângulo.
@@ -40,6 +41,8 @@ Para começar um modelo próprio, use **Novo projeto**. **Explorar um exemplo** 
 - Estrutura desktop Tauri 2 com ícones padrão provisórios; a arte personalizada será incorporada em uma etapa posterior.
 
 O modelo e a edição usam unidades SI: **m, kN e kPa**, ângulos em graus na entrada. A edição aceita ponto ou vírgula decimal. Não há backend, login ou chamadas remotas durante o uso do aplicativo.
+
+Para importar coordenadas, selecione o terreno ou uma região e use **Importar CSV** nas propriedades. Escolha o arquivo, informe se há cabeçalho e sua unidade (m, cm ou mm), confira as colunas X/Z e a prévia em metros e confirme **Aplicar contorno**. O comando substitui somente o contorno selecionado e preserva seu ID e material, sem inferir vínculos com contornos vizinhos. Arquivos UTF-8 com BOM opcional, até 1 MiB e 500 pontos, aceitam separador `;`, vírgula ou tabulação e separador decimal explícito; vírgula não pode separar campos e decimais ao mesmo tempo. Os [exemplos CSV](examples/) são ilustrativos; veja o [passo a passo e as limitações](docs/GUIA-DE-USO.md#importar-coordenadas-csv). O projeto permanece no formato `geostruct/4`.
 
 ## Uso desktop
 

@@ -10,6 +10,19 @@
 
 Os artefatos do CI incluem traces de falhas, sem capturas de imagens. Resultados de uma execução específica devem ser conferidos pelo SHA no GitHub Actions.
 
+### Importação CSV — primeiro incremento da #9 (19/11/2026)
+
+Validação local no Windows com Node 24.22.2, a partir da master `de00f77`, na branch `issue-9-importacao-csv`:
+
+- Instalação limpa: `npm ci --offline --cache ../npm-cache --maxsockets=1` concluída com o cache local, sem alterações de dependências.
+- `npm run check -- --maxWorkers=2`: **490 testes passaram**, incluindo 39 de interpretação/aplicação CSV e 16 de leitura web/adaptador nativo.
+- `npm run test:e2e -- --workers=2`: **93 testes passaram** no Chrome local via Playwright, incluindo sete cenários CSV e os fluxos anteriores.
+- `npm run build` e `npm run format:check`: aprovados. O build mantém avisos de tamanho do bundle e anotações da dependência Zod.
+
+Os casos CSV verificam unidades m/cm/mm, escolha de cabeçalho e colunas, separadores e aspas, limites e UTF-8 inválido, equivalência com X/Z manual, geometria inválida, isolamento de regiões/seções, cancelamento e histórico em uma operação. O fechamento cancelado preserva a prévia. Também foi conferida a janela mínima de 960 × 640 no tema claro e a janela de 1280 × 720 no tema escuro.
+
+Os testes do adaptador nativo usam mocks: não comprovam o seletor, as permissões ou o uso real no Tauri. Compilações desktop no CI e homologação nativa permanecem pendentes nesta entrega local. O formato permanece `geostruct/4`; cálculos e critérios geotécnicos não foram alterados. A importação DXF continua pendente na #9.
+
 ### Evolução da geometria e edição
 
 Testes adicionais verificam interfaces com subdivisões diferentes, conservação de área e ausência de sobreposição após editar/dividir, limites de pontos, identidades/materiais, cópia inválida, precisão/captura e faces verticais. O arquivo de exemplo da primeira versão é lido e regravado sem alterar seus dados. Os fluxos de interface cobrem edição compartilhada e histórico, inserção/exclusão gráfica, divisão com persistência, rejeição de cópia, deslocamento relativo, medição sem modificar o modelo e entrada de face vertical na janela mínima.

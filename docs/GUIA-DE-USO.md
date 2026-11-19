@@ -17,6 +17,30 @@ Também é possível digitar a tabela X/Z nas propriedades. **Colar lista de coo
 
 Clique em **Usar coordenadas**, confira a tabela e **Aplicar**. Os campos são um rascunho: sair deles para outro elemento oferece a opção de continuar editando ou descartar. O desenho não é modificado por um valor ainda não aplicado.
 
+### Importar coordenadas CSV
+
+Selecione **Terreno** ou uma região de solo na árvore e clique em **Importar CSV** nas propriedades. Aplique ou descarte antes qualquer alteração pendente dessas propriedades. A importação substitui a lista inteira de pontos do contorno selecionado; não acrescenta pontos à lista nem altera os contornos vizinhos por inferência de vínculos.
+
+1. Escolha um arquivo `.csv` em UTF-8, com BOM opcional. O limite é de 1 MiB (1.048.576 bytes), 64 colunas e 500 pontos. Não use separadores de milhares nos campos numéricos.
+2. Confira **Separador** e **Separador decimal**. O separador inicial é `;` e o decimal inicial é vírgula. Também há vírgula ou tabulação entre campos e ponto decimal. Não é permitido escolher vírgula nas duas funções; por exemplo, um CSV separado por vírgulas deve usar ponto decimal.
+3. Em **Primeira linha**, escolha explicitamente **Cabeçalho** ou **Coordenadas**. A opção não é deduzida do conteúdo. Se houver cabeçalho, ele identifica as opções de coluna e não vira um ponto.
+4. Informe a **Unidade do arquivo**: m, cm ou mm. Escolha as colunas **X** e **Z**; as outras colunas são ignoradas. Campos entre aspas podem conter o separador e aspas internas duplicadas, conforme CSV.
+5. Confira a **Prévia das coordenadas em metros**, a ordem dos pontos e os erros indicados. Só use **Aplicar contorno** quando a prévia estiver correta. A conversão afeta X e Z: 1.000 cm correspondem a 10 m; 1.000 mm correspondem a 1 m.
+
+O terreno exige ao menos dois pontos na ordem da esquerda para a direita e pode conter faces verticais. Uma região exige ao menos três pontos, contorno simples, área não nula e posição dentro da seção, sem sobreposição com outras regiões. Liste cada vértice uma vez, sem repetir o primeiro ao final: o editor fecha a região automaticamente. Valem as mesmas coordenadas-limite, base e validações da edição X/Z. A importação conserva a ordem dos pontos, sem arredondar pela grade, ajustar a escala automaticamente ou corrigir geometria inválida.
+
+**Aplicar contorno** confirma uma única operação de **Desfazer/Refazer**. A região conserva ID e material; outros elementos e seções permanecem iguais. O arquivo escolhido e as configurações de leitura não são gravados no projeto: somente as coordenadas confirmadas em metros entram no `.geo.json`, ainda no formato v4. Erro de leitura ou de geometria conserva o projeto. Escolher outro arquivo invalida a prévia anterior; confira a nova leitura antes de aplicar.
+
+**Cancelar**, Escape ou **Fechar janela** descartam somente a importação ainda não aplicada. Enquanto o diálogo está aberto, a navegação e o fechamento continuam protegidos. Após aplicar, salve o projeto normalmente. CSV não importa materiais, água, cargas, casos de análise ou resultados; DXF/DWG permanecem pendentes.
+
+Exemplos próprios em `examples/`, sem dados de projeto real:
+
+| Arquivo                                                              | Configuração                                                     | Resultado                                        |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------ |
+| [terreno-coordenadas-m.csv](../examples/terreno-coordenadas-m.csv)   | `;`, vírgula decimal, cabeçalho, m, X = coluna 1 e Z = coluna 2  | (0; 12), (10; 12), (20; 8) m                     |
+| [terreno-coordenadas-cm.csv](../examples/terreno-coordenadas-cm.csv) | `;`, vírgula decimal, cabeçalho, cm, X = coluna 1 e Z = coluna 2 | Mesmo terreno, convertido de centímetros         |
+| [regiao-colunas-mm.csv](../examples/regiao-colunas-mm.csv)           | `;`, vírgula decimal, cabeçalho, mm, X = coluna 3 e Z = coluna 2 | Retângulo de 6 m × 4 m; coluna de nomes ignorada |
+
 ## Calcular o projeto padrão
 
 Na tela inicial ou em **Arquivo → Projeto**, escolha **Abrir projeto padrão**. A cópia é editável e já abre na aba **Análise**, no caso **Talude — busca circular**. Para trocar o projeto aberto, o aplicativo aplica a mesma proteção de rascunhos e alterações da abertura de arquivos.
