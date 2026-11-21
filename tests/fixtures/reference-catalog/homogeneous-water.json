@@ -1,0 +1,1140 @@
+{
+  "schema": "geostruct-independent-reference-case/1",
+  "version": 1,
+  "id": "H-W05",
+  "classification": "own-extra",
+  "publication": null,
+  "provenance": {
+    "sourceUrl": null,
+    "baselineControlsSourceUrl": "https://github.com/ricardocorsini/openstruct-front/issues/31#issuecomment-7047662690",
+    "implementationIssueUrl": "https://github.com/ricardocorsini/geo-struct/issues/6",
+    "description": "Additional team-defined homogeneous wet control. Same terrain, effective soil and circle A as G01; prescribed water is 5 ft (1.524 m) below every terrain vertex, interpolated through all four vertices.",
+    "publication": null,
+    "reviewStatus": "Not a previously published or independently reviewed control. Automatically reproduced for issue #6; human engineering review remains deferred.",
+    "independence": "Recalculated with analytical areas, prescribed pressure, clipped load moments and equilibrium equations in this Python standard-library script; no production imports or outputs.",
+    "sourceBaseElevationM": 0.0,
+    "domainBaseConvention": "Registration domain closes 1 ft below the source foundation boundary, outside the entire sliding mass; no physical change to the analyzed mass.",
+    "scope": "Additional regression reference with positive pore pressure. Original A01/A01-B inputs and expectations remain unchanged; their coincident-end-cut diagnostic is not bypassed."
+  },
+  "units": {
+    "length": "m",
+    "area": "m2",
+    "unitWeight": "kN/m3",
+    "stress": "kPa",
+    "forcePerWidth": "kN/m",
+    "momentPerWidth": "kN",
+    "angle": "rad (explicit degree fields also provided)"
+  },
+  "profiles": {
+    "geometry": {
+      "toleranceM": 1e-8,
+      "maxArcDegrees": 3.0,
+      "sourceMandatoryCutRoundingFeetDecimals": 12
+    },
+    "P0": {
+      "F0": 1.4,
+      "residualTolerance": 1e-6,
+      "maxEvaluations": 20
+    },
+    "P1": {
+      "F0": 1.4,
+      "residualTolerance": 1e-8,
+      "maxEvaluations": 20
+    },
+    "admissibility": {
+      "drivingThresholdKNPerM": 0.0,
+      "mThreshold": 0.0,
+      "tensionToleranceKPa": 0.0,
+      "scope": "Strict reference screening only; not product defaults"
+    },
+    "comparison": {
+      "absoluteFS": 1e-9,
+      "scope": "Only these identical inputs/discretisation/profiles"
+    }
+  },
+  "input": {
+    "terrain": [
+      {
+        "x": 0.0,
+        "z": 0.0
+      },
+      {
+        "x": 36.576,
+        "z": 14.630400000000002
+      },
+      {
+        "x": 41.148,
+        "z": 14.630400000000002
+      },
+      {
+        "x": 77.724,
+        "z": 0.0
+      }
+    ],
+    "baseElevationM": -0.3048,
+    "sourceBaseElevationM": 0.0,
+    "regions": [],
+    "material": {
+      "id": "homogeneous-effective",
+      "unitWeightKNPerM3": 15.70874638462462,
+      "cohesionKPa": 4.788025898033585,
+      "frictionAngleDegrees": 30.0,
+      "strengthMode": "effective"
+    },
+    "water": {
+      "condition": "piezometric",
+      "unitWeightKNPerM3": 9.802257744005763,
+      "line": [
+        {
+          "x": 0.0,
+          "z": -1.524
+        },
+        {
+          "x": 36.576,
+          "z": 13.1064
+        },
+        {
+          "x": 41.148,
+          "z": 13.1064
+        },
+        {
+          "x": 77.724,
+          "z": -1.524
+        }
+      ],
+      "externalWater": "none-on-the-analyzed-downstream-mass"
+    },
+    "loads": [],
+    "circle": {
+      "center": {
+        "x": 70.104,
+        "z": 33.528
+      },
+      "radiusM": 30.48
+    },
+    "movement": "left-to-right"
+  },
+  "expected": {
+    "sliceCount": 15,
+    "intersections": [
+      {
+        "x": 49.08331034482758,
+        "z": 11.45627586206897
+      },
+      {
+        "x": 70.10400000000001,
+        "z": 3.0479999999999983
+      }
+    ],
+    "mandatoryCutsXM": [
+      49.08331034482769, 52.76740755040639, 65.36886831166267, 70.104
+    ],
+    "cutsXM": [
+      49.08331034482769, 50.258811932835066, 51.48795172061375,
+      52.76740755040639, 54.03927114759432, 55.351117993683225,
+      56.699683053859935, 58.0816099059305, 59.49345909406612,
+      60.93171668921027, 62.39280303484096, 63.87308165632112,
+      65.36886831166267, 66.94011741109499, 68.5199179521051, 70.104
+    ],
+    "segments": [
+      {
+        "number": 1,
+        "leftXM": 49.08331034482769,
+        "rightXM": 52.76740755040639,
+        "sliceCount": 3
+      },
+      {
+        "number": 2,
+        "leftXM": 52.76740755040639,
+        "rightXM": 65.36886831166267,
+        "sliceCount": 9
+      },
+      {
+        "number": 3,
+        "leftXM": 65.36886831166267,
+        "rightXM": 70.104,
+        "sliceCount": 3
+      }
+    ],
+    "slices": [
+      {
+        "number": 1,
+        "segment": 1,
+        "left": {
+          "x": 49.08331034482769,
+          "z": 11.45627586206886
+        },
+        "right": {
+          "x": 50.258811932835066,
+          "z": 10.393633560029041
+        },
+        "thetaLeftRadians": -0.761012754224725,
+        "thetaRightRadians": -0.7090181342004817,
+        "widthM": 1.1755015880073785,
+        "baseLengthM": 1.5846175076315279,
+        "alphaRadians": 0.7350154442126033,
+        "alphaDegrees": 42.11328283031558,
+        "sinAlpha": 0.670598612549799,
+        "cosAlpha": 0.7418203966232557,
+        "areaM2": 0.3590889696517934,
+        "weightKNPerM": 5.640837553776189,
+        "pressureSample": {
+          "x": 49.66415428948213,
+          "z": 10.917314310923164
+        },
+        "waterSegment": 3,
+        "waterElevationM": 9.699938284207152,
+        "signedWaterHeadM": -1.2173760267160123,
+        "pressureKPa": 0.0,
+        "pressureTimesWidthKNPerM": 0.0,
+        "loadContributions": [],
+        "loadKNPerM": 0.0,
+        "loadDrivingMomentKN": 0.0,
+        "loadDrivingKNPerM": 0.0,
+        "weightDrivingKNPerM": 3.7827378371811147,
+        "drivingKNPerM": 3.7827378371811147,
+        "felleniusNormalForceKNPerM": 4.184488351429608,
+        "felleniusNormalStressKPa": 2.6406929945410083,
+        "felleniusFrictionKNPerM": 2.4159154761187374,
+        "cohesionKNPerM": 7.587189665017187,
+        "bishopReducedNumeratorKNPerM": 8.885071126686565
+      },
+      {
+        "number": 2,
+        "segment": 1,
+        "left": {
+          "x": 50.258811932835066,
+          "z": 10.393633560029041
+        },
+        "right": {
+          "x": 51.48795172061375,
+          "z": 9.39351955273202
+        },
+        "thetaLeftRadians": -0.7090181342004817,
+        "thetaRightRadians": -0.6570235141762383,
+        "widthM": 1.229139787778685,
+        "baseLengthM": 1.5846175076315223,
+        "alphaRadians": 0.68302082418836,
+        "alphaDegrees": 39.134210545540036,
+        "sinAlpha": 0.6311390619379557,
+        "cosAlpha": 0.775669700643307,
+        "areaM2": 1.0515575699765805,
+        "weightKNPerM": 16.518651175594258,
+        "pressureSample": {
+          "x": 50.866881392131106,
+          "z": 9.885587524392001
+        },
+        "waterSegment": 3,
+        "waterElevationM": 9.21884744314756,
+        "signedWaterHeadM": -0.6667400812444413,
+        "pressureKPa": 0.0,
+        "pressureTimesWidthKNPerM": 0.0,
+        "loadContributions": [],
+        "loadKNPerM": 0.0,
+        "loadDrivingMomentKN": 0.0,
+        "loadDrivingKNPerM": 0.0,
+        "weightDrivingKNPerM": 10.425566007444868,
+        "drivingKNPerM": 10.425566007444868,
+        "felleniusNormalForceKNPerM": 12.813017212404409,
+        "felleniusNormalStressKPa": 8.085873815414056,
+        "felleniusFrictionKNPerM": 7.397598936712994,
+        "cohesionKNPerM": 7.58718966501716,
+        "bishopReducedNumeratorKNPerM": 15.42220083906672
+      },
+      {
+        "number": 3,
+        "segment": 1,
+        "left": {
+          "x": 51.48795172061375,
+          "z": 9.39351955273202
+        },
+        "right": {
+          "x": 52.76740755040639,
+          "z": 8.458636979837443
+        },
+        "thetaLeftRadians": -0.6570235141762383,
+        "thetaRightRadians": -0.6050288941519949,
+        "widthM": 1.2794558297926386,
+        "baseLengthM": 1.5846175076315268,
+        "alphaRadians": 0.6310262041641166,
+        "alphaDegrees": 36.155138260764495,
+        "sinAlpha": 0.589973648777814,
+        "cosAlpha": 0.8074225001495763,
+        "areaM2": 1.6901025592188716,
+        "weightKNPerM": 26.54939246677427,
+        "pressureSample": {
+          "x": 52.121603185252226,
+          "z": 8.917762195440915
+        },
+        "waterSegment": 3,
+        "waterElevationM": 8.716958725899111,
+        "signedWaterHeadM": -0.20080346954180328,
+        "pressureKPa": 0.0,
+        "pressureTimesWidthKNPerM": 0.0,
+        "loadContributions": [],
+        "loadKNPerM": 0.0,
+        "loadDrivingMomentKN": 0.0,
+        "loadDrivingKNPerM": 0.0,
+        "weightDrivingKNPerM": 15.663441946457024,
+        "drivingKNPerM": 15.663441946457024,
+        "felleniusNormalForceKNPerM": 21.436576842975207,
+        "felleniusNormalStressKPa": 13.527918718388843,
+        "felleniusFrictionKNPerM": 12.376413410795832,
+        "cohesionKNPerM": 7.587189665017181,
+        "bishopReducedNumeratorKNPerM": 21.45436653595035
+      },
+      {
+        "number": 4,
+        "segment": 2,
+        "left": {
+          "x": 52.76740755040639,
+          "z": 8.458636979837443
+        },
+        "right": {
+          "x": 54.03927114759432,
+          "z": 7.625203106639535
+        },
+        "thetaLeftRadians": -0.6050288941519949,
+        "thetaRightRadians": -0.5551350014765213,
+        "widthM": 1.2718635971879308,
+        "baseLengthM": 1.5206081121858748,
+        "alphaRadians": 0.580081947814258,
+        "alphaDegrees": 33.23624738148506,
+        "sinAlpha": 0.5480924812375537,
+        "cosAlpha": 0.8364177377428469,
+        "areaM2": 2.154414545385805,
+        "weightKNPerM": 33.84315170081196,
+        "pressureSample": {
+          "x": 53.39814117187936,
+          "z": 8.033987353598025
+        },
+        "waterSegment": 3,
+        "waterElevationM": 8.206343531248258,
+        "signedWaterHeadM": 0.17235617765023292,
+        "pressureKPa": 1.6894796770992286,
+        "pressureTimesWidthKNPerM": 2.148787699491329,
+        "loadContributions": [],
+        "loadKNPerM": 0.0,
+        "loadDrivingMomentKN": 0.0,
+        "loadDrivingKNPerM": 0.0,
+        "weightDrivingKNPerM": 18.54917698859696,
+        "drivingKNPerM": 18.54917698859696,
+        "felleniusNormalForceKNPerM": 26.509728237182927,
+        "felleniusNormalStressKPa": 17.43363594126509,
+        "felleniusFrictionKNPerM": 15.305398733881384,
+        "cohesionKNPerM": 7.280711021905927,
+        "bishopReducedNumeratorKNPerM": 24.388465430058414
+      },
+      {
+        "number": 5,
+        "segment": 2,
+        "left": {
+          "x": 54.03927114759432,
+          "z": 7.625203106639535
+        },
+        "right": {
+          "x": 55.351117993683225,
+          "z": 6.856238293886648
+        },
+        "thetaLeftRadians": -0.5551350014765213,
+        "thetaRightRadians": -0.5052411088010476,
+        "widthM": 1.3118468460889048,
+        "baseLengthM": 1.5206081121858748,
+        "alphaRadians": 0.5301880551387844,
+        "alphaDegrees": 30.377537907701726,
+        "sinAlpha": 0.5056955875682541,
+        "cosAlpha": 0.8627119871162092,
+        "areaM2": 2.5950044178801477,
+        "weightKNPerM": 40.76426626745969,
+        "pressureSample": {
+          "x": 54.69039849091962,
+          "z": 7.232538632697942
+        },
+        "waterSegment": 3,
+        "waterElevationM": 7.689440603632153,
+        "signedWaterHeadM": 0.4569019709342115,
+        "pressureKPa": 4.478670882841371,
+        "pressureTimesWidthKNPerM": 5.875330272325663,
+        "loadContributions": [],
+        "loadKNPerM": 0.0,
+        "loadDrivingMomentKN": 0.0,
+        "loadDrivingKNPerM": 0.0,
+        "weightDrivingKNPerM": 20.614309581911787,
+        "drivingKNPerM": 20.614309581911787,
+        "felleniusNormalForceKNPerM": 30.099103300732313,
+        "felleniusNormalStressKPa": 19.794122535269683,
+        "felleniusFrictionKNPerM": 17.37772539304415,
+        "cohesionKNPerM": 7.280711021905927,
+        "bishopReducedNumeratorKNPerM": 26.424293261857606
+      },
+      {
+        "number": 6,
+        "segment": 2,
+        "left": {
+          "x": 55.351117993683225,
+          "z": 6.856238293886648
+        },
+        "right": {
+          "x": 56.699683053859935,
+          "z": 6.153656405907693
+        },
+        "thetaLeftRadians": -0.5052411088010476,
+        "thetaRightRadians": -0.4553472161255739,
+        "widthM": 1.3485650601767105,
+        "baseLengthM": 1.5206081121858739,
+        "alphaRadians": 0.4802941624633107,
+        "alphaDegrees": 27.51882843391839,
+        "sinAlpha": 0.4620400761699139,
+        "cosAlpha": 0.8868590463049357,
+        "areaM2": 2.9420592522537845,
+        "weightKNPerM": 46.21606264219305,
+        "pressureSample": {
+          "x": 56.02101847834102,
+          "z": 6.496536268625558
+        },
+        "waterSegment": 3,
+        "waterElevationM": 7.1571926086635935,
+        "signedWaterHeadM": 0.6606563400380354,
+        "pressureKPa": 6.475923725264337,
+        "pressureTimesWidthKNPerM": 8.733204468260888,
+        "loadContributions": [],
+        "loadKNPerM": 0.0,
+        "loadDrivingMomentKN": 0.0,
+        "loadDrivingKNPerM": 0.0,
+        "weightDrivingKNPerM": 21.35367310347239,
+        "drivingKNPerM": 21.35367310347239,
+        "felleniusNormalForceKNPerM": 33.24201185291665,
+        "felleniusNormalStressKPa": 21.860998627142177,
+        "felleniusFrictionKNPerM": 19.192284491686156,
+        "cohesionKNPerM": 7.280711021905923,
+        "bishopReducedNumeratorKNPerM": 28.097702690025606
+      },
+      {
+        "number": 7,
+        "segment": 2,
+        "left": {
+          "x": 56.699683053859935,
+          "z": 6.153656405907693
+        },
+        "right": {
+          "x": 58.0816099059305,
+          "z": 5.51920608762277
+        },
+        "thetaLeftRadians": -0.4553472161255739,
+        "thetaRightRadians": -0.4054533234501002,
+        "widthM": 1.3819268520705634,
+        "baseLengthM": 1.5206081121858772,
+        "alphaRadians": 0.4304002697878371,
+        "alphaDegrees": 24.660118960135062,
+        "sinAlpha": 0.4172346005526035,
+        "cosAlpha": 0.9087988160763137,
+        "areaM2": 3.1837765519118193,
+        "weightKNPerM": 50.01313839929743,
+        "pressureSample": {
+          "x": 57.38668937515665,
+          "z": 5.827812085993955
+        },
+        "waterSegment": 3,
+        "waterElevationM": 6.610924249937342,
+        "signedWaterHeadM": 0.7831121639433869,
+        "pressureKPa": 7.676267273439175,
+        "pressureTimesWidthKNPerM": 10.608039868836086,
+        "loadContributions": [],
+        "loadKNPerM": 0.0,
+        "loadDrivingMomentKN": 0.0,
+        "loadDrivingKNPerM": 0.0,
+        "weightDrivingKNPerM": 20.867211822412937,
+        "drivingKNPerM": 20.867211822412937,
+        "felleniusNormalForceKNPerM": 35.81130689185376,
+        "felleniusNormalStressKPa": 23.550648326066693,
+        "felleniusFrictionKNPerM": 20.675667674044067,
+        "cohesionKNPerM": 7.2807110219059386,
+        "bishopReducedNumeratorKNPerM": 29.367245800907465
+      },
+      {
+        "number": 8,
+        "segment": 2,
+        "left": {
+          "x": 58.0816099059305,
+          "z": 5.51920608762277
+        },
+        "right": {
+          "x": 59.49345909406612,
+          "z": 4.954466412368525
+        },
+        "thetaLeftRadians": -0.4054533234501002,
+        "thetaRightRadians": -0.3555594307746266,
+        "widthM": 1.4118491881356192,
+        "baseLengthM": 1.5206081121858706,
+        "alphaRadians": 0.3805063771123634,
+        "alphaDegrees": 21.801409486351726,
+        "sinAlpha": 0.37139067635410233,
+        "cosAlpha": 0.9284766908852599,
+        "areaM2": 3.310165092228715,
+        "weightKNPerM": 51.99854392505845,
+        "pressureSample": {
+          "x": 58.78401218472696,
+          "z": 5.228030461817276
+        },
+        "waterSegment": 3,
+        "waterElevationM": 6.051995126109217,
+        "signedWaterHeadM": 0.8239646642919407,
+        "pressureKPa": 8.076714011342784,
+        "pressureTimesWidthKNPerM": 11.40310211971789,
+        "loadContributions": [],
+        "loadKNPerM": 0.0,
+        "loadDrivingMomentKN": 0.0,
+        "loadDrivingKNPerM": 0.0,
+        "weightDrivingKNPerM": 19.311774397755958,
+        "drivingKNPerM": 19.311774397755958,
+        "felleniusNormalForceKNPerM": 37.69192147244774,
+        "felleniusNormalStressKPa": 24.78739996873073,
+        "felleniusFrictionKNPerM": 21.761441008391937,
+        "cohesionKNPerM": 7.280711021905907,
+        "bishopReducedNumeratorKNPerM": 30.19775973109619
+      },
+      {
+        "number": 9,
+        "segment": 2,
+        "left": {
+          "x": 59.49345909406612,
+          "z": 4.954466412368525
+        },
+        "right": {
+          "x": 60.93171668921027,
+          "z": 4.460842951767567
+        },
+        "thetaLeftRadians": -0.3555594307746266,
+        "thetaRightRadians": -0.30566553809915287,
+        "widthM": 1.438257595144151,
+        "baseLengthM": 1.5206081121858788,
+        "alphaRadians": 0.33061248443688973,
+        "alphaDegrees": 18.942700012568395,
+        "sinAlpha": 0.32462240379039725,
+        "cosAlpha": 0.945843694781196,
+        "areaM2": 3.313163208069909,
+        "weightKNPerM": 52.045640566439495,
+        "pressureSample": {
+          "x": 60.20950913246869,
+          "z": 4.698684183069144
+        },
+        "waterSegment": 3,
+        "waterElevationM": 5.481796347012526,
+        "signedWaterHeadM": 0.7831121639433825,
+        "pressureKPa": 7.676267273439131,
+        "pressureTimesWidthKNPerM": 11.040449708380313,
+        "loadContributions": [],
+        "loadKNPerM": 0.0,
+        "loadDrivingMomentKN": 0.0,
+        "loadDrivingKNPerM": 0.0,
+        "weightDrivingKNPerM": 16.8951809474886,
+        "drivingKNPerM": 16.8951809474886,
+        "felleniusNormalForceKNPerM": 38.784501226394816,
+        "felleniusNormalStressKPa": 25.505914979397275,
+        "felleniusFrictionKNPerM": 22.392242223444416,
+        "cohesionKNPerM": 7.280711021905946,
+        "bishopReducedNumeratorKNPerM": 30.560772593666144
+      },
+      {
+        "number": 10,
+        "segment": 2,
+        "left": {
+          "x": 60.93171668921027,
+          "z": 4.460842951767567
+        },
+        "right": {
+          "x": 62.39280303484096,
+          "z": 4.039564277423565
+        },
+        "thetaLeftRadians": -0.30566553809915287,
+        "thetaRightRadians": -0.25577164542367925,
+        "widthM": 1.4610863456306902,
+        "baseLengthM": 1.520608112185873,
+        "alphaRadians": 0.28071859176141606,
+        "alphaDegrees": 16.083990538785063,
+        "sinAlpha": 0.27704618367346345,
+        "cosAlpha": 0.9608566033035156,
+        "areaM2": 3.186735936879302,
+        "weightKNPerM": 50.059626627206086,
+        "pressureSample": {
+          "x": 61.659632321632834,
+          "z": 4.241090731308841
+        },
+        "waterSegment": 3,
+        "waterElevationM": 4.901747071346868,
+        "signedWaterHeadM": 0.6606563400380274,
+        "pressureKPa": 6.475923725264259,
+        "pressureTimesWidthKNPerM": 9.461883730329442,
+        "loadContributions": [],
+        "loadKNPerM": 0.0,
+        "loadDrivingMomentKN": 0.0,
+        "loadDrivingKNPerM": 0.0,
+        "weightDrivingKNPerM": 13.868828513185939,
+        "drivingKNPerM": 13.868828513185939,
+        "felleniusNormalForceKNPerM": 39.00860934168232,
+        "felleniusNormalStressKPa": 25.653295565816414,
+        "felleniusFrictionKNPerM": 22.521631104133238,
+        "cohesionKNPerM": 7.280711021905918,
+        "bishopReducedNumeratorKNPerM": 30.43483705214594
+      },
+      {
+        "number": 11,
+        "segment": 2,
+        "left": {
+          "x": 62.39280303484096,
+          "z": 4.039564277423565
+        },
+        "right": {
+          "x": 63.87308165632112,
+          "z": 3.69167890314883
+        },
+        "thetaLeftRadians": -0.25577164542367925,
+        "thetaRightRadians": -0.20587775274820558,
+        "widthM": 1.48027862148016,
+        "baseLengthM": 1.52060811218587,
+        "alphaRadians": 0.23082469908594241,
+        "alphaDegrees": 13.225281065001731,
+        "sinAlpha": 0.2287804277031298,
+        "cosAlpha": 0.9734780510622584,
+        "areaM2": 2.926950008665642,
+        "weightKNPerM": 45.9787153666034,
+        "pressureSample": {
+          "x": 63.1307725636086,
+          "z": 3.8563890036223647
+        },
+        "waterSegment": 3,
+        "waterElevationM": 4.31329097455656,
+        "signedWaterHeadM": 0.4569019709341955,
+        "pressureKPa": 4.478670882841214,
+        "pressureTimesWidthKNPerM": 6.629680760515523,
+        "loadContributions": [],
+        "loadKNPerM": 0.0,
+        "loadDrivingMomentKN": 0.0,
+        "loadDrivingKNPerM": 0.0,
+        "weightDrivingKNPerM": 10.519030166811994,
+        "drivingKNPerM": 10.519030166811994,
+        "felleniusNormalForceKNPerM": 38.30542151951579,
+        "felleniusNormalStressKPa": 25.19085700815567,
+        "felleniusFrictionKNPerM": 22.115645425714522,
+        "cohesionKNPerM": 7.280711021905905,
+        "bishopReducedNumeratorKNPerM": 29.8057880981292
+      },
+      {
+        "number": 12,
+        "segment": 2,
+        "left": {
+          "x": 63.87308165632112,
+          "z": 3.69167890314883
+        },
+        "right": {
+          "x": 65.36886831166267,
+          "z": 3.4180526753349554
+        },
+        "thetaLeftRadians": -0.20587775274820558,
+        "thetaRightRadians": -0.1559838600727319,
+        "widthM": 1.495786655341547,
+        "baseLengthM": 1.520608112185879,
+        "alphaRadians": 0.18093080641046874,
+        "alphaDegrees": 10.366571591218399,
+        "sinAlpha": 0.17994526375407666,
+        "cosAlpha": 0.9836766247362371,
+        "areaM2": 2.5320258995921563,
+        "weightKNPerM": 39.77495269599419,
+        "pressureSample": {
+          "x": 64.61926836077575,
+          "z": 3.545536478039491
+        },
+        "waterSegment": 3,
+        "waterElevationM": 3.7178926556897025,
+        "signedWaterHeadM": 0.1723561776502116,
+        "pressureKPa": 1.6894796770990197,
+        "pressureTimesWidthKNPerM": 2.5271011554754597,
+        "loadContributions": [],
+        "loadKNPerM": 0.0,
+        "loadDrivingMomentKN": 0.0,
+        "loadDrivingKNPerM": 0.0,
+        "weightDrivingKNPerM": 7.157314353686597,
+        "drivingKNPerM": 7.157314353686597,
+        "felleniusNormalForceKNPerM": 36.63984088205391,
+        "felleniusNormalStressKPa": 24.095518489233903,
+        "felleniusFrictionKNPerM": 21.15402199631888,
+        "cohesionKNPerM": 7.2807110219059465,
+        "bishopReducedNumeratorKNPerM": 28.66692235736207
+      },
+      {
+        "number": 13,
+        "segment": 3,
+        "left": {
+          "x": 65.36886831166267,
+          "z": 3.4180526753349554
+        },
+        "right": {
+          "x": 66.94011741109499,
+          "z": 3.2126532765395552
+        },
+        "thetaLeftRadians": -0.15598386007273188,
+        "thetaRightRadians": -0.10398924004848792,
+        "widthM": 1.5712490994323218,
+        "baseLengthM": 1.58461750763154,
+        "alphaRadians": 0.12998655006060988,
+        "alphaDegrees": 7.447680711938942,
+        "sinAlpha": 0.1296208061605978,
+        "cosAlpha": 0.9915636371964619,
+        "areaM2": 2.0730666007997343,
+        "weightKNPerM": 32.565277470398875,
+        "pressureSample": {
+          "x": 66.15315782822498,
+          "z": 3.3051403382518387
+        },
+        "waterSegment": 3,
+        "waterElevationM": 3.1043368687100106,
+        "signedWaterHeadM": -0.20080346954182815,
+        "pressureKPa": 0.0,
+        "pressureTimesWidthKNPerM": 0.0,
+        "loadContributions": [],
+        "loadKNPerM": 0.0,
+        "loadDrivingMomentKN": 0.0,
+        "loadDrivingKNPerM": 0.0,
+        "weightDrivingKNPerM": 4.221137518556655,
+        "drivingKNPerM": 4.221137518556655,
+        "felleniusNormalForceKNPerM": 32.29054497486071,
+        "felleniusNormalStressKPa": 20.377501081080446,
+        "felleniusFrictionKNPerM": 18.642954833515546,
+        "cohesionKNPerM": 7.587189665017245,
+        "bishopReducedNumeratorKNPerM": 26.324753094113547
+      },
+      {
+        "number": 14,
+        "segment": 3,
+        "left": {
+          "x": 66.94011741109499,
+          "z": 3.2126532765395552
+        },
+        "right": {
+          "x": 68.5199179521051,
+          "z": 3.0891911523210673
+        },
+        "thetaLeftRadians": -0.10398924004848792,
+        "thetaRightRadians": -0.05199462002424396,
+        "widthM": 1.5798005410101155,
+        "baseLengthM": 1.5846175076315403,
+        "alphaRadians": 0.07799193003636594,
+        "alphaDegrees": 4.468608427163366,
+        "sinAlpha": 0.07791288662651585,
+        "cosAlpha": 0.9969601707678816,
+        "areaM2": 1.3484517599113843,
+        "weightKNPerM": 21.182486708348666,
+        "pressureSample": {
+          "x": 67.7292152156238,
+          "z": 3.140653994994967
+        },
+        "waterSegment": 3,
+        "waterElevationM": 2.473913913750483,
+        "signedWaterHeadM": -0.6667400812444839,
+        "pressureKPa": 0.0,
+        "pressureTimesWidthKNPerM": 0.0,
+        "loadContributions": [],
+        "loadKNPerM": 0.0,
+        "loadDrivingMomentKN": 0.0,
+        "loadDrivingKNPerM": 0.0,
+        "weightDrivingKNPerM": 1.6503886853752485,
+        "drivingKNPerM": 1.6503886853752485,
+        "felleniusNormalForceKNPerM": 21.118095566043667,
+        "felleniusNormalStressKPa": 13.326935657556868,
+        "felleniusFrictionKNPerM": 12.192538159827553,
+        "cohesionKNPerM": 7.587189665017246,
+        "bishopReducedNumeratorKNPerM": 19.793840307254673
+      },
+      {
+        "number": 15,
+        "segment": 3,
+        "left": {
+          "x": 68.5199179521051,
+          "z": 3.0891911523210673
+        },
+        "right": {
+          "x": 70.104,
+          "z": 3.0479999999999983
+        },
+        "thetaLeftRadians": -0.05199462002424396,
+        "thetaRightRadians": 0.0,
+        "widthM": 1.5840820478948956,
+        "baseLengthM": 1.5846175076315494,
+        "alphaRadians": 0.02599731001212198,
+        "alphaDegrees": 1.4895361423877884,
+        "sinAlpha": 0.02599438168686915,
+        "cosAlpha": 0.999662088968426,
+        "areaM2": 0.4801190139980136,
+        "weightKNPerM": 7.542067825330833,
+        "pressureSample": {
+          "x": 69.31169124618422,
+          "z": 3.0582995282423724
+        },
+        "waterSegment": 3,
+        "waterElevationM": 1.8409235015263121,
+        "signedWaterHeadM": -1.2173760267160603,
+        "pressureKPa": 0.0,
+        "pressureTimesWidthKNPerM": 0.0,
+        "loadContributions": [],
+        "loadKNPerM": 0.0,
+        "loadDrivingMomentKN": 0.0,
+        "loadDrivingKNPerM": 0.0,
+        "weightDrivingKNPerM": 0.19605138975990483,
+        "drivingKNPerM": 0.19605138975990483,
+        "felleniusNormalForceKNPerM": 7.539519277411775,
+        "felleniusNormalStressKPa": 4.757942684023936,
+        "felleniusFrictionKNPerM": 4.352943484374061,
+        "cohesionKNPerM": 7.58718966501729,
+        "bishopReducedNumeratorKNPerM": 11.93904075913201
+      }
+    ],
+    "totals": {
+      "areaM2": 33.14668138642366,
+      "weightKNPerM": 520.6928113912868,
+      "loadKNPerM": 0.0,
+      "loadDrivingMomentKN": 0.0,
+      "loadDrivingKNPerM": 0.0,
+      "weightDrivingKNPerM": 185.075823260098,
+      "drivingKNPerM": 185.075823260098,
+      "felleniusFrictionKNPerM": 239.87442235200348,
+      "cohesionKNPerM": 111.04953718725665
+    },
+    "fellenius": {
+      "mathematicalFS": 1.8961091370972099,
+      "contactStatus": "OK",
+      "eligibleFS": 1.8961091370972099,
+      "minNormalForceKNPerM": 4.184488351429608,
+      "minNormalStressKPa": 2.6406929945410083
+    },
+    "bishop": {
+      "P0": {
+        "mathematicalStatus": "CONVERGIU",
+        "contactStatus": "OK",
+        "eligibleFS": 1.9109136867152365,
+        "F": 1.9109136867152365,
+        "G": 1.910914533986577,
+        "residual": 8.472713404206189e-7,
+        "evaluations": 7,
+        "minMAtF": 0.944430431898759,
+        "minMOverIterations": 0.944430431898759,
+        "minNormalForceKNPerM": 3.1534969051982893,
+        "minNormalStressKPa": 1.9900681962751443,
+        "tensionSliceCount": 0,
+        "history": [
+          {
+            "k": 1,
+            "F": 1.4,
+            "G": 1.840788398285185,
+            "residual": 0.440788398285185,
+            "minM": 1.0103819913000915
+          },
+          {
+            "k": 2,
+            "F": 1.840788398285185,
+            "G": 1.903278436223799,
+            "residual": 0.062490037938614185,
+            "minM": 0.9521489112067301
+          },
+          {
+            "k": 3,
+            "F": 1.903278436223799,
+            "G": 1.910106756954493,
+            "residual": 0.006828320730693838,
+            "minM": 0.9452432285668475
+          },
+          {
+            "k": 4,
+            "F": 1.910106756954493,
+            "G": 1.9108294286637406,
+            "residual": 0.0007226717092476687,
+            "minM": 0.9445160250556304
+          },
+          {
+            "k": 5,
+            "F": 1.9108294286637406,
+            "G": 1.9109056503646908,
+            "residual": 7.622170095022973e-5,
+            "minM": 0.9444393659912163
+          },
+          {
+            "k": 6,
+            "F": 1.9109056503646908,
+            "G": 1.9109136867152365,
+            "residual": 8.036350545692628e-6,
+            "minM": 0.9444312839791676
+          },
+          {
+            "k": 7,
+            "F": 1.9109136867152365,
+            "G": 1.910914533986577,
+            "residual": 8.472713404206189e-7,
+            "minM": 0.944430431898759
+          }
+        ],
+        "slicesAtReturnedF": [
+          {
+            "slice": 1,
+            "m": 0.944430431898759,
+            "normalForceKNPerM": 3.1534969051982893,
+            "normalStressKPa": 1.9900681962751443
+          },
+          {
+            "slice": 2,
+            "m": 0.9663576997084723,
+            "normalForceKNPerM": 14.500577056365763,
+            "normalStressKPa": 9.150837338683274
+          },
+          {
+            "slice": 3,
+            "m": 0.9856730654705916,
+            "normalForceKNPerM": 24.55878292161728,
+            "normalStressKPa": 15.498240303001856
+          },
+          {
+            "slice": 4,
+            "m": 1.0020146162325594,
+            "normalForceKNPerM": 29.546569398295752,
+            "normalStressKPa": 19.43075876125805
+          },
+          {
+            "slice": 5,
+            "m": 1.015499360842339,
+            "normalForceKNPerM": 32.45910603969733,
+            "normalStressKPa": 21.34613499663457
+          },
+          {
+            "slice": 6,
+            "m": 1.0264566451957784,
+            "normalForceKNPerM": 34.80171739186489,
+            "normalStressKPa": 22.886710331853635
+          },
+          {
+            "slice": 7,
+            "m": 1.0348591978816009,
+            "normalForceKNPerM": 36.54159563190486,
+            "normalStressKPa": 24.030909304683536
+          },
+          {
+            "slice": 8,
+            "m": 1.0406861059196666,
+            "normalForceKNPerM": 37.648641472144014,
+            "normalStressKPa": 24.758937671340043
+          },
+          {
+            "slice": 9,
+            "m": 1.0439228668109575,
+            "normalForceKNPerM": 38.09511095211161,
+            "normalStressKPa": 25.052550125718962
+          },
+          {
+            "slice": 10,
+            "m": 1.0445614246326167,
+            "normalForceKNPerM": 37.85529235057175,
+            "normalStressKPa": 24.894837826529017
+          },
+          {
+            "slice": 11,
+            "m": 1.0426001900882076,
+            "normalForceKNPerM": 36.905197211012684,
+            "normalStressKPa": 24.270025205877378
+          },
+          {
+            "slice": 12,
+            "m": 1.0380440444632884,
+            "normalForceKNPerM": 35.22225097347811,
+            "normalStressKPa": 23.163266518975764
+          },
+          {
+            "slice": 13,
+            "m": 1.0307263727243223,
+            "normalForceKNPerM": 31.095182217832498,
+            "normalStressKPa": 19.623146953809147
+          },
+          {
+            "slice": 14,
+            "m": 1.0205002324566348,
+            "normalForceKNPerM": 20.45382913713119,
+            "normalStressKPa": 12.907738958218788
+          },
+          {
+            "slice": 15,
+            "m": 1.0075158519974248,
+            "normalForceKNPerM": 7.383366112729251,
+            "normalStressKPa": 4.659399556783144
+          }
+        ]
+      },
+      "P1": {
+        "mathematicalStatus": "CONVERGIU",
+        "contactStatus": "OK",
+        "eligibleFS": 1.9109146233139187,
+        "F": 1.9109146233139187,
+        "G": 1.9109146327316466,
+        "residual": 9.417727930838282e-9,
+        "evaluations": 9,
+        "minMAtF": 0.9444303325932799,
+        "minMOverIterations": 0.9444303325932799,
+        "minNormalForceKNPerM": 3.1534986185828418,
+        "minNormalStressKPa": 1.9900692775357918,
+        "tensionSliceCount": 0,
+        "history": [
+          {
+            "k": 1,
+            "F": 1.4,
+            "G": 1.840788398285185,
+            "residual": 0.440788398285185,
+            "minM": 1.0103819913000915
+          },
+          {
+            "k": 2,
+            "F": 1.840788398285185,
+            "G": 1.903278436223799,
+            "residual": 0.062490037938614185,
+            "minM": 0.9521489112067301
+          },
+          {
+            "k": 3,
+            "F": 1.903278436223799,
+            "G": 1.910106756954493,
+            "residual": 0.006828320730693838,
+            "minM": 0.9452432285668475
+          },
+          {
+            "k": 4,
+            "F": 1.910106756954493,
+            "G": 1.9108294286637406,
+            "residual": 0.0007226717092476687,
+            "minM": 0.9445160250556304
+          },
+          {
+            "k": 5,
+            "F": 1.9108294286637406,
+            "G": 1.9109056503646908,
+            "residual": 7.622170095022973e-5,
+            "minM": 0.9444393659912163
+          },
+          {
+            "k": 6,
+            "F": 1.9109056503646908,
+            "G": 1.9109136867152365,
+            "residual": 8.036350545692628e-6,
+            "minM": 0.9444312839791676
+          },
+          {
+            "k": 7,
+            "F": 1.9109136867152365,
+            "G": 1.910914533986577,
+            "residual": 8.472713404206189e-7,
+            "minM": 0.944430431898759
+          },
+          {
+            "k": 8,
+            "F": 1.910914533986577,
+            "G": 1.9109146233139187,
+            "residual": 8.932734174571522e-8,
+            "minM": 0.9444303420644554
+          },
+          {
+            "k": 9,
+            "F": 1.9109146233139187,
+            "G": 1.9109146327316466,
+            "residual": 9.417727930838282e-9,
+            "minM": 0.9444303325932799
+          }
+        ],
+        "slicesAtReturnedF": [
+          {
+            "slice": 1,
+            "m": 0.9444303325932799,
+            "normalForceKNPerM": 3.1534986185828418,
+            "normalStressKPa": 1.9900692775357918
+          },
+          {
+            "slice": 2,
+            "m": 0.9663576062463539,
+            "normalForceKNPerM": 14.500579729783478,
+            "normalStressKPa": 9.150839025789281
+          },
+          {
+            "slice": 3,
+            "m": 0.9856729781044464,
+            "normalForceKNPerM": 24.558786263211857,
+            "normalStressKPa": 15.498242411772308
+          },
+          {
+            "slice": 4,
+            "m": 1.0020145350683796,
+            "normalForceKNPerM": 29.546572813065524,
+            "normalStressKPa": 19.430761006918683
+          },
+          {
+            "slice": 5,
+            "m": 1.0154992859564957,
+            "normalForceKNPerM": 32.45910936326447,
+            "normalStressKPa": 21.346137182317463
+          },
+          {
+            "slice": 6,
+            "m": 1.0264565767746539,
+            "normalForceKNPerM": 34.801720552253265,
+            "normalStressKPa": 22.88671241022501
+          },
+          {
+            "slice": 7,
+            "m": 1.0348591360954875,
+            "normalForceKNPerM": 36.541598566527206,
+            "normalStressKPa": 24.03091123458403
+          },
+          {
+            "slice": 8,
+            "m": 1.0406860509223428,
+            "normalForceKNPerM": 37.64864412820119,
+            "normalStressKPa": 24.758939418047266
+          },
+          {
+            "slice": 9,
+            "m": 1.043922818739305,
+            "normalForceKNPerM": 38.095113287059576,
+            "normalStressKPa": 25.05255166125461
+          },
+          {
+            "slice": 10,
+            "m": 1.0445613836062808,
+            "normalForceKNPerM": 37.85529433267553,
+            "normalStressKPa": 24.894839130023165
+          },
+          {
+            "slice": 11,
+            "m": 1.0426001562092977,
+            "normalForceKNPerM": 36.905198820009105,
+            "normalStressKPa": 24.270026264004326
+          },
+          {
+            "slice": 12,
+            "m": 1.0380440178161252,
+            "normalForceKNPerM": 35.222252201372825,
+            "normalStressKPa": 23.16326732647817
+          },
+          {
+            "slice": 13,
+            "m": 1.0307263535294477,
+            "normalForceKNPerM": 31.095183041635643,
+            "normalStressKPa": 19.62314747368422
+          },
+          {
+            "slice": 14,
+            "m": 1.0205002209189187,
+            "normalForceKNPerM": 20.45382951695688,
+            "normalStressKPa": 12.90773919791429
+          },
+          {
+            "slice": 15,
+            "m": 1.0075158481480513,
+            "normalForceKNPerM": 7.383366191147355,
+            "normalStressKPa": 4.659399606270231
+          }
+        ]
+      }
+    }
+  }
+}
