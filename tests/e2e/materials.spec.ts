@@ -267,9 +267,9 @@ test("leitura de v1 comunica migração e o salvamento v5 preserva todos os dado
     ),
   );
   await open(page, legacy);
-  await expect(page.getByRole("status")).toContainText(
-    "versão anterior aberto",
-  );
+  await expect(
+    page.getByRole("status", { name: "Notificação do aplicativo" }),
+  ).toContainText("versão anterior aberto");
   const result = await save(page);
   expect(result).toMatchObject({ ...legacy, version: 5 });
   await page.locator("input[type=file]").setInputFiles({

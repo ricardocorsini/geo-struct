@@ -82,7 +82,9 @@ test("conferência protege rascunhos e importação inválida mantém o projeto"
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(bad)),
   });
-  await expect(page.getByRole("status")).toContainText("inválido");
+  await expect(
+    page.getByRole("status", { name: "Notificação do aplicativo" }),
+  ).toContainText("inválido");
   await expect(
     page.getByRole("heading", { name: "Perfil do terreno" }),
   ).toBeVisible();

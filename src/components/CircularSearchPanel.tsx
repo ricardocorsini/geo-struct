@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MAX_BISHOP_ITERATIONS } from "../core/bishop";
 import type {
-  CircularSearchProfile,
   SearchCircleEvaluation,
   SearchMethod,
-  SearchProgress,
 } from "../core/circular-search";
 import type { FixedCircleGeometry } from "../core/fixed-circle";
 import type { InputPreparation } from "../core/input";
@@ -16,10 +14,10 @@ import {
 import { parseNumber } from "../domain/geometry";
 import type { NumericalProfile } from "../domain/model";
 import { startSearchWorker } from "../lib/circular-search-client";
+import type { SearchExecutionControls } from "../lib/use-case-calculation";
 import {
   CircularSearchResults,
   CircularSearchTable,
-  type CompletedSearch,
 } from "./CircularSearchResults";
 import { Dialog } from "./Dialog";
 import { SearchCircleInspection } from "./SearchCircleInspection";
@@ -28,11 +26,6 @@ export type SearchOverlay = {
   inputRevision: string;
   geometry: FixedCircleGeometry;
 };
-type RunState =
-  | { status: "idle" }
-  | { status: "running" | "cancelled"; progress: SearchProgress }
-  | { status: "failed"; message: string }
-  | { status: "completed"; result: CompletedSearch };
 type Inspection =
   | { kind: "list" }
   | {
@@ -73,12 +66,16 @@ export function CircularSearchPanel({
   onPreview,
   initialProfile,
   onProfileChange,
+  execution,
+  executionBlocked = false,
 }: {
   preparation: InputPreparation;
   dirty: boolean;
   onPreview: (overlay: SearchOverlay | null) => void;
   initialProfile: NumericalProfile["search"];
   onProfileChange: (fields: Record<Field, string>) => void;
+  execution: SearchExecutionControls;
+  executionBlocked?: boolean;
 }) {
   const [hasSavedProfile] = useState(
     () => initialProfile.geometry.toleranceM !== null,
@@ -97,7 +94,7 @@ export function CircularSearchPanel({
     }
     return values;
   });
-  const [run, setRun] = useState<RunState>({ status: "idle" });
+  const { state: run } = execution;
   const [inspection, setInspection] = useState<Inspection | null>(null);
   const [visibleNumber, setVisibleNumber] = useState<number | null>(null);
   const worker = useRef<(() => void) | null>(null);
@@ -105,16 +102,20 @@ export function CircularSearchPanel({
     worker.current?.();
     worker.current = null;
   }, []);
-  const reset = useCallback(() => {
+  const resetInspection = useCallback(() => {
     stopWorker();
-    setRun({ status: "idle" });
     setInspection(null);
     setVisibleNumber(null);
     onPreview(null);
   }, [stopWorker, onPreview]);
+  const executionIdentity =
+    run.status === "completed" ? run.result : run.status;
   useEffect(() => {
-    if (dirty) reset();
-  }, [dirty, reset]);
+    resetInspection();
+  }, [executionIdentity, resetInspection]);
+  useEffect(() => {
+    if (dirty || executionBlocked) resetInspection();
+  }, [dirty, executionBlocked, resetInspection]);
   useEffect(
     () => () => {
       stopWorker();
@@ -136,65 +137,18 @@ export function CircularSearchPanel({
   );
   const completed =
     !dirty &&
+    !executionBlocked &&
     run.status === "completed" &&
     run.result.inputRevision === preparation.snapshot?.revision
       ? run.result
       : null;
-  const running = !dirty && run.status === "running";
+  const running = !dirty && !executionBlocked && run.status === "running";
 
   const start = () => {
-    if (dirty || running || grid?.status !== "ready") return;
-    reset();
-    const read = (key: Field) => parseNumber(values[key]) ?? NaN;
-    const profile: CircularSearchProfile = {
-      geometry: {
-        toleranceM: read("toleranceM"),
-        maxArcDegrees: read("maxArcDegrees"),
-      },
-      equilibrium: {
-        drivingThresholdKNPerM: read("drivingThresholdKNPerM"),
-        tensionToleranceKPa: read("tensionToleranceKPa"),
-      },
-      nearTieTolerance: read("nearTieTolerance"),
-      bishop: hasBishop
-        ? {
-            initialFactor: read("initialFactor"),
-            residualTolerance: read("residualTolerance"),
-            maxIterations: read("maxIterations"),
-            singularityThreshold: read("singularityThreshold"),
-          }
-        : null,
-    };
-    setRun({
-      status: "running",
-      progress: { completed: 0, total: grid.grid.total },
-    });
-    try {
-      worker.current = startSearchWorker(
-        { type: "run", preparation, profile },
-        (response) => {
-          if (response.type === "progress") {
-            setRun({ status: "running", progress: response.progress });
-          } else {
-            worker.current = null;
-            if (response.type === "result") {
-              const result = response.result;
-              setRun(
-                result.status === "completed"
-                  ? { status: "completed", result }
-                  : { status: "failed", message: result.diagnostic.message },
-              );
-            } else if (response.type === "error")
-              setRun({ status: "failed", message: response.message });
-          }
-        },
-      );
-    } catch {
-      setRun({
-        status: "failed",
-        message: "Não foi possível iniciar a busca em segundo plano.",
-      });
-    }
+    if (dirty || executionBlocked || running || grid?.status !== "ready")
+      return;
+    resetInspection();
+    execution.start();
   };
 
   const inspect = (location: SearchLocation, method: SearchMethod | null) => {
@@ -238,7 +192,7 @@ export function CircularSearchPanel({
           const next = { ...values, [key]: e.target.value };
           setValues(next);
           onProfileChange(next);
-          reset();
+          resetInspection();
         }}
         onKeyDown={(e) => {
           if (e.key === "Enter") e.preventDefault();
@@ -310,7 +264,9 @@ export function CircularSearchPanel({
                 className="secondary"
                 type="button"
                 onClick={start}
-                disabled={running || grid?.status !== "ready"}
+                disabled={
+                  executionBlocked || running || grid?.status !== "ready"
+                }
               >
                 Iniciar busca circular
               </button>
@@ -318,10 +274,7 @@ export function CircularSearchPanel({
                 <button
                   className="secondary"
                   type="button"
-                  onClick={() => {
-                    stopWorker();
-                    setRun({ status: "cancelled", progress: run.progress });
-                  }}
+                  onClick={execution.cancel}
                 >
                   Cancelar busca
                 </button>

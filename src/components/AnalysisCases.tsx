@@ -23,6 +23,7 @@ import {
   type FixedCirclePreviewProps,
 } from "./FixedCirclePreview";
 import { CircularSearchPanel, type SearchOverlay } from "./CircularSearchPanel";
+import type { SearchExecutionControls } from "../lib/use-case-calculation";
 
 export function AnalysisCases({
   project,
@@ -187,6 +188,7 @@ export function CaseInspector({
   onSearchPreview,
   onProfileApply,
   onDiscard,
+  searchExecution,
 }: {
   project: Project;
   section: Section;
@@ -202,6 +204,7 @@ export function CaseInspector({
   onSearchPreview: (overlay: SearchOverlay | null) => void;
   onProfileApply: (profile: NumericalProfile) => void;
   onDiscard: () => void;
+  searchExecution: SearchExecutionControls;
 }) {
   const initial: Record<string, string> = {
     name: c.name,
@@ -404,6 +407,8 @@ export function CaseInspector({
         key={geometryPreview.preparation.snapshot?.revision}
         preparation={geometryPreview.preparation}
         dirty={dirty}
+        executionBlocked={invalidProfile}
+        execution={searchExecution}
         onPreview={onSearchPreview}
         initialProfile={profile.search}
         onProfileChange={(fields) => updateProfile("search", fields)}
@@ -412,6 +417,7 @@ export function CaseInspector({
       <FixedCirclePreview
         {...geometryPreview}
         dirty={dirty}
+        executionBlocked={invalidProfile}
         initialProfile={profile}
         onProfileChange={(group, fields) => updateProfile(group, fields)}
         onChange={(fields) => {

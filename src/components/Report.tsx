@@ -24,6 +24,7 @@ import {
 } from "../domain/materials";
 import { diagnose, boundary } from "../domain/geometry";
 import { exportText, safeName } from "../lib/files";
+import { createReportHtml } from "../lib/report-html";
 const number = (n: number | null) =>
   n === null
     ? "Não informado"
@@ -185,7 +186,7 @@ export function Report({
                 document.getElementById("project-report")!.outerHTML;
               await exportText(
                 `${safeName(project.name)}-entradas.html`,
-                `<!doctype html><html lang="pt-BR"><meta charset="UTF-8"><title>GeoStruct · Relatório de entradas</title><style>body{font:14px system-ui;max-width:1000px;margin:40px auto;padding:20px;color:#302d28}table{border-collapse:collapse;width:100%;margin:16px 0}th,td{border:1px solid #ddd;padding:8px;text-align:left}svg{width:100%;height:280px}h2{margin-top:32px}section{break-inside:avoid}p{line-height:1.6}</style><body>${content}</body></html>`,
+                createReportHtml("GeoStruct · Relatório de entradas", content),
                 "text/html",
               );
             } catch (e) {

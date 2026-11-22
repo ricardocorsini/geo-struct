@@ -2,12 +2,25 @@
 
 ## Em desenvolvimento
 
+### Memorial e CSV de resultados
+
+- Memorial do caso, superfície e método selecionados na aba Resultados, com HTML portátil e impressão/PDF, perfil, revisões SHA-256 e contratos/formulações do motor.
+- CSV completo da malha e CSV das fatias da superfície selecionada, com unidades, precisão, IDs, estados e parcelas diagnósticas. Resistência nula, falta de convergência e descarte permanecem distintos.
+- Bloqueio de exportação de resultados obsoletos ou parciais; consulta preserva rascunhos e mantém o relatório independente de entradas. Nenhuma mudança nas equações ou no formato v5.
+
 ### Perfil de cálculo por caso
 
 - Formato `geostruct/5` com `numericalProfile` por caso. Geometria, Fellenius, Bishop e busca conservam suas configurações ao salvar, reabrir, alternar modos/métodos, duplicar e desfazer/refazer.
 - Perfis parciais guardam campos nulos como pendências explícitas. Rascunhos inválidos permanecem protegidos na interface. Resultados e prévias continuam na sessão.
 - Leitura de v1 a v4 com validação do contrato original antes da migração. Casos de v4 recebem perfil vazio, conservando a abertura de 3° já usada pela preparação geométrica; os demais parâmetros precisam ser informados.
 - Os perfis ilustrativos preenchidos do projeto padrão passam a integrar o arquivo salvo.
+
+### Importação CSV de contornos
+
+- Importação CSV para o terreno ou uma região, com prévia em metros, cabeçalho, colunas e unidade m/cm/mm explícitos.
+- Separadores configuráveis, campos entre aspas, limites de arquivo/pontos e validação de contorno, domínio e sobreposição antes da aplicação.
+- Substituição isolada em uma operação de histórico, preservando IDs, material, demais elementos e seções, com proteção de rascunhos e cancelamento sem alterar o projeto.
+- Exemplos próprios e testes de leitura/interface. A importação preserva o formato corrente, `geostruct/5` nesta base integrada com os perfis por caso; DXF/DWG permanecem pendentes na issue #9.
 
 ## 0.2.0 — 2026-11-18
 

@@ -18,6 +18,7 @@ import { SliceLoadInspection } from "./SliceLoadInspection";
 import { prepareSliceMechanics } from "../core/slice-mechanics";
 import { SliceMechanicsInspection } from "./SliceMechanicsInspection";
 import { FixedCircleMethods } from "./FixedCircleMethods";
+import type { FixedCaseCalculation } from "../lib/case-calculation";
 
 export type GeometryFields = { tolerance: string; angle: string };
 export type FixedCirclePreviewProps = {
@@ -25,6 +26,9 @@ export type FixedCirclePreviewProps = {
   values: GeometryFields;
   result: FixedCirclePreparation | null;
   dirty: boolean;
+  executionBlocked?: boolean;
+  preparedCalculation?: FixedCaseCalculation | null;
+  calculatedMethods?: FixedCaseCalculation["methods"];
   onChange: (values: GeometryFields) => void;
   onPrepare: (result: FixedCirclePreparation) => void;
   initialProfile: NumericalProfile;
@@ -53,6 +57,9 @@ export function FixedCirclePreview({
   values,
   result,
   dirty,
+  executionBlocked = false,
+  preparedCalculation,
+  calculatedMethods,
   onChange,
   onPrepare,
   initialProfile,
@@ -64,10 +71,12 @@ export function FixedCirclePreview({
   );
   const weights = useMemo(
     () =>
-      result?.status === "prepared"
-        ? prepareSliceWeights(preparation, result)
-        : null,
-    [preparation, result],
+      preparedCalculation?.geometry === result
+        ? (preparedCalculation.preparations?.weights ?? null)
+        : result?.status === "prepared"
+          ? prepareSliceWeights(preparation, result)
+          : null,
+    [preparation, result, preparedCalculation],
   );
   const weightsBySlice = new Map(
     !dirty && weights?.status === "prepared"
@@ -76,10 +85,12 @@ export function FixedCirclePreview({
   );
   const pressures = useMemo(
     () =>
-      result?.status === "prepared"
-        ? prepareSlicePressures(preparation, result)
-        : null,
-    [preparation, result],
+      preparedCalculation?.geometry === result
+        ? (preparedCalculation.preparations?.pressures ?? null)
+        : result?.status === "prepared"
+          ? prepareSlicePressures(preparation, result)
+          : null,
+    [preparation, result, preparedCalculation],
   );
   const pressuresBySlice = new Map(
     !dirty && pressures?.status === "prepared"
@@ -89,10 +100,12 @@ export function FixedCirclePreview({
   const input = preparation.snapshot?.input;
   const loads = useMemo(
     () =>
-      result?.status === "prepared"
-        ? prepareSliceLoads(preparation, result)
-        : null,
-    [preparation, result],
+      preparedCalculation?.geometry === result
+        ? (preparedCalculation.preparations?.loads ?? null)
+        : result?.status === "prepared"
+          ? prepareSliceLoads(preparation, result)
+          : null,
+    [preparation, result, preparedCalculation],
   );
   const allowed =
     !!input &&
@@ -101,14 +114,16 @@ export function FixedCirclePreview({
     !!values.tolerance.trim();
   const mechanics = useMemo(
     () =>
-      result?.status === "prepared"
-        ? prepareSliceMechanics(preparation, result, {
-            weights,
-            pressures,
-            loads,
-          })
-        : null,
-    [preparation, result, weights, pressures, loads],
+      preparedCalculation?.geometry === result
+        ? (preparedCalculation.preparations?.mechanics ?? null)
+        : result?.status === "prepared"
+          ? prepareSliceMechanics(preparation, result, {
+              weights,
+              pressures,
+              loads,
+            })
+          : null,
+    [preparation, result, weights, pressures, loads, preparedCalculation],
   );
   const prepare = () => {
     if (!allowed) return;
@@ -296,6 +311,8 @@ export function FixedCirclePreview({
         <FixedCircleMethods
           preparation={preparation}
           mechanics={dirty ? null : mechanics}
+          executionBlocked={executionBlocked}
+          calculatedMethods={calculatedMethods}
           initialProfile={initialProfile}
           onProfileChange={onProfileChange}
         />

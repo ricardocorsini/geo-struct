@@ -1,4 +1,8 @@
-import { resolveCaseSection, directionLabel } from "../domain/analysis";
+import {
+  resolveCaseSection,
+  directionLabel,
+  methodLabel,
+} from "../domain/analysis";
 import { activeWater, activeLoads } from "../domain/conditions";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -29,6 +33,8 @@ import {
 import { snapPoint, measurePoints, type Precision } from "../domain/precision";
 import { boundary, distance, elevation } from "../domain/geometry";
 import type { FixedCircleGeometry } from "../core/fixed-circle";
+import type { Circle } from "../core/circle-geometry";
+import type { SearchMethod } from "../core/circular-search";
 import { SliceOverlay } from "./SliceOverlay";
 
 export type Visibility = {
@@ -73,6 +79,9 @@ export function ModelCanvas({
   selection,
   analysisCase,
   sliceGeometry,
+  resultsMode = false,
+  resultSelection = null,
+  onSelectSlice,
   tool,
   dark,
   grid,
@@ -95,6 +104,14 @@ export function ModelCanvas({
   selection: Selection;
   analysisCase: AnalysisCase | null;
   sliceGeometry: FixedCircleGeometry | null;
+  resultsMode?: boolean;
+  resultSelection?: {
+    candidate: number | "fixed";
+    method: SearchMethod | null;
+    sliceNumber: number | null;
+    circle: Circle | null;
+  } | null;
+  onSelectSlice?: (number: number) => void;
   tool: Tool;
   dark: boolean;
   grid: boolean;
@@ -169,7 +186,13 @@ export function ModelCanvas({
   }, [points.length, tool, onDrawing]);
   const fit = () => {
     const pts = boundary(section);
-    if (analysisCase?.surfaceMode === "fixed") {
+    if (resultsMode && resultSelection?.circle && !sliceGeometry) {
+      const c = resultSelection.circle;
+      pts.push(
+        { x: c.x - c.radius, y: c.z - c.radius },
+        { x: c.x + c.radius, y: c.z + c.radius },
+      );
+    } else if (!resultsMode && analysisCase?.surfaceMode === "fixed") {
       const c = analysisCase.fixedCircle;
       if (c.x !== null && c.y !== null && c.radius !== null)
         pts.push(
@@ -177,7 +200,7 @@ export function ModelCanvas({
           { x: c.x + c.radius, y: c.y + c.radius },
         );
     }
-    if (analysisCase?.surfaceMode === "search") {
+    if (!resultsMode && analysisCase?.surfaceMode === "search") {
       const { x, y } = analysisCase.search;
       if (x.min !== null && x.max !== null && y.min !== null && y.max !== null)
         pts.push({ x: x.min, y: y.min }, { x: x.max, y: y.max });
@@ -203,11 +226,21 @@ export function ModelCanvas({
     );
     setView({
       x: (size.w - z * (xmax - xmin)) / 2 - z * xmin,
-      y: (size.h + z * (ymax - ymin)) / 2 + z * ymin + 15,
+      y: (size.h + z * (ymax - ymin)) / 2 + z * ymin + (resultsMode ? 55 : 15),
       z,
     });
   };
-  useEffect(fit, [section.id, analysisCase?.id, fitToken, size.w, size.h]);
+  useEffect(fit, [
+    section.id,
+    analysisCase?.id,
+    fitToken,
+    size.w,
+    size.h,
+    resultsMode,
+    resultSelection?.circle?.x,
+    resultSelection?.circle?.z,
+    resultSelection?.circle?.radius,
+  ]);
   const zoom = (factor: number, px = size.w / 2, py = size.h / 2) =>
     setView((v) => {
       const z = Math.max(0.00001, Math.min(100000, v.z * factor));
@@ -434,6 +467,11 @@ export function ModelCanvas({
               vx: view.x,
               vy: view.y,
             };
+            return;
+          }
+          if (resultsMode) {
+            const hit = (e.target as Element).closest("[data-slice]");
+            if (hit) onSelectSlice?.(Number(hit.getAttribute("data-slice")));
             return;
           }
           if (tool === "insert-vertex") {
@@ -693,10 +731,61 @@ export function ModelCanvas({
                 </g>
               );
             })}
-          {analysisCase && visibility.circle && sliceGeometry && (
-            <SliceOverlay geometry={sliceGeometry} />
+          {analysisCase &&
+            visibility.circle &&
+            sliceGeometry &&
+            !resultsMode && (
+              <SliceOverlay
+                geometry={sliceGeometry}
+                selectedSliceNumber={
+                  resultsMode ? resultSelection?.sliceNumber : null
+                }
+                interactive={resultsMode}
+              />
+            )}
+          {resultsMode && resultSelection?.circle && visibility.circle && (
+            <g
+              data-result-candidate={resultSelection.candidate}
+              data-result-method={resultSelection.method ?? ""}
+              pointerEvents="none"
+              fill="none"
+              stroke={dark ? "#efb172" : "#a34f20"}
+            >
+              {sliceGeometry && (
+                <SliceOverlay
+                  geometry={sliceGeometry}
+                  selectedSliceNumber={resultSelection.sliceNumber}
+                  interactive
+                />
+              )}
+              {sliceGeometry?.slices.length ? (
+                (() => {
+                  const first = sliceGeometry.slices[0].left;
+                  const last = sliceGeometry.slices.at(-1)!.right;
+                  const radius = sliceGeometry.circle.radius;
+                  return (
+                    <path
+                      data-result-arc="true"
+                      d={`M${last.x} ${last.baseZ} A${radius} ${radius} 0 0 0 ${first.x} ${first.baseZ}`}
+                      strokeWidth={3}
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  );
+                })()
+              ) : (
+                <circle
+                  data-result-circle="true"
+                  cx={resultSelection.circle.x}
+                  cy={resultSelection.circle.z}
+                  r={resultSelection.circle.radius}
+                  strokeWidth={2}
+                  strokeDasharray="6 4"
+                  vectorEffect="non-scaling-stroke"
+                />
+              )}
+            </g>
           )}
-          {analysisCase && visibility.circle && (
+          {analysisCase && visibility.circle && !resultSelection && (
             <g
               data-case-preview={analysisCase.id}
               pointerEvents="none"
@@ -921,10 +1010,31 @@ export function ModelCanvas({
           <div
             className="case-preview-note"
             role="note"
-            aria-label="Prévia do caso"
+            aria-label={
+              resultsMode && resultSelection
+                ? "Resultado no desenho"
+                : "Prévia do caso"
+            }
           >
-            Prévia: {analysisCase.name} ·{" "}
-            {directionLabel(analysisCase.direction)} · prévia das entradas
+            {resultsMode && resultSelection ? (
+              <>
+                Resultado: {analysisCase.name} ·{" "}
+                {resultSelection.candidate === "fixed"
+                  ? "círculo fixo"
+                  : `superfície ${resultSelection.candidate}`}
+                {resultSelection.method && (
+                  <> · {methodLabel(resultSelection.method)}</>
+                )}
+                {resultSelection.sliceNumber !== null && (
+                  <> · fatia {resultSelection.sliceNumber}</>
+                )}
+              </>
+            ) : (
+              <>
+                Prévia: {analysisCase.name} ·{" "}
+                {directionLabel(analysisCase.direction)} · prévia das entradas
+              </>
+            )}
           </div>
         )}
       </div>

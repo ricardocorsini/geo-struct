@@ -5,11 +5,24 @@ import { auditProject, auditCounts } from "../domain/audit";
 export function Audit({
   project,
   onLocate,
+  calculationDiagnostic,
 }: {
   project: Project;
   onLocate: (d: Diagnostic) => void;
+  calculationDiagnostic?: Diagnostic;
 }) {
-  const scopes = useMemo(() => auditProject(project), [project]);
+  const scopes = useMemo(
+    () =>
+      auditProject(project).map((scope) =>
+        calculationDiagnostic && scope.id === calculationDiagnostic.target
+          ? {
+              ...scope,
+              diagnostics: [...scope.diagnostics, calculationDiagnostic],
+            }
+          : scope,
+      ),
+    [project, calculationDiagnostic],
+  );
   const [scope, setScope] = useState("all"),
     [level, setLevel] = useState("all");
   const selected = scopes.filter((s) => scope === "all" || s.id === scope);

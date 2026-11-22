@@ -163,7 +163,9 @@ test("cópia fora da seção é recusada e Escape preserva o projeto", async ({
     .click();
   await point(page, "0", "0");
   await point(page, "100", "0");
-  await expect(page.getByRole("status")).toContainText("inteiramente dentro");
+  await expect(
+    page.getByRole("status", { name: "Notificação do aplicativo" }),
+  ).toContainText("inteiramente dentro");
   await expect(page.locator('[data-pick="region"]')).toHaveCount(2);
   await cancel(page);
   expect(await saved(page)).toEqual(original);
