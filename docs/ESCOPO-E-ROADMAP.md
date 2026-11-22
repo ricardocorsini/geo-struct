@@ -68,14 +68,18 @@ Formulação D1 com `ue b` no numerador reduzido, ponto fixo, resíduo no F aval
 
 D5 orienta a malha de centros X/Z e raios, com preparação compartilhada e classificação por método. A interface mostra progresso, cancelamento, mínimo admissível, bordas, empates e contagens por motivo. A inspeção reproduz o candidato e permite conferir o refinamento das fatias. Veja [Busca circular](BUSCA-CIRCULAR.md).
 
+### Catálogo independente de referência — integrado no recorte da #6
+
+Os sete controles G01/A01/Q/C da #31 conservam entradas e resultados, com reprodutores Python independentes do núcleo: cinco secos/79 fatias têm preparo completo; A01/A01-B/48 fatias verificam equações em fatias prescritas e o bloqueio separado `cuts-too-close`, sem alterar a política geométrica R3. H-W05 acrescenta um controle próprio homogêneo com pressão positiva e 15 fatias de preparo completo, sem publicação ou aceite humano anteriores. STRAT acrescenta o caso ilustrativo estratificado, círculo fixo e os 27 candidatos da busca em 3° e 1,5°. A cobertura de P0/P1, tração/admissibilidade, tolerâncias por grandeza e limites R0–R6 está em [Casos de referência](CASOS-DE-REFERENCIA.md). A regressão permanece separada do parecer humano independente da #44 e da homologação nativa; não declara preparo bem-sucedido dos dois casos publicados com cortes coincidentes.
+
 ### Referências e decisões
 
 - [#28 — Roadmap](https://github.com/ricardocorsini/openstruct-front/issues/28): primeiro motor determinístico 2D, superfícies circulares, Mohr–Coulomb, Fellenius e Bishop Simplificado.
 - [#29 — Bibliografia](https://github.com/ricardocorsini/openstruct-front/issues/29): seleção aprovada pelo Eng. Gustavo Azocar. Referências principais: Duncan, Wright e Brandon (2014) e USACE EM 1110-2-1902 (2003).
-- [#30 — Especificação](https://github.com/ricardocorsini/openstruct-front/issues/30), [PR #37](https://github.com/ricardocorsini/openstruct-front/pull/37): documento candidato; D1–D5 aprovadas como base, R0–R6, consulta direta de Bishop e aceite final pendentes na consulta de 17/11/2026.
-- [#31 — Validação](https://github.com/ricardocorsini/openstruct-front/issues/31): catálogo de casos independentes e tolerâncias ainda pendente na mesma consulta.
+- [#30 — Especificação](https://github.com/ricardocorsini/openstruct-front/issues/30), [PR #37](https://github.com/ricardocorsini/openstruct-front/pull/37): especificação candidata, com D1–D5 como base e decisões posteriores de R0–R6 registradas na publicação da #31. A conferência direta do original de Bishop foi concluída; os valores gerais de R3/R4 e o aceite integral continuam pendentes. Não se declara integração da PR #37 por esta entrega.
+- [#31 — Validação](https://github.com/ricardocorsini/openstruct-front/issues/31): [catálogo publicado em 20/11/2026](https://github.com/ricardocorsini/openstruct-front/issues/31#issuecomment-7047662690), preparado e revisado em 18–19/11, com aceite de Gustavo Azocar das referências e da base técnica. P0 foi preservado e P1 registrado separadamente. A revisão por outra pessoa da engenharia permanece pendente na [#44](https://github.com/ricardocorsini/openstruct-front/issues/44); os cenários geométricos adicionais, na [#45](https://github.com/ricardocorsini/openstruct-front/issues/45).
 
-Os testes de modelagem deste repositório não substituem os casos geotécnicos da #31. Os exemplos têm números ilustrativos, sem origem experimental e sem resultados de estabilidade associados.
+Os testes de modelagem não substituem os casos geotécnicos da #31. O catálogo integrado distingue exemplos publicados, controles da equipe e entradas ilustrativas do projeto padrão. Os FS de referência não são parâmetros experimentais, parecer independente de engenharia ou aprovação de estabilidade de um projeto.
 
 ## Sequência proposta
 
@@ -83,9 +87,9 @@ Os testes de modelagem deste repositório não substituem os casos geotécnicos 
 2. Materiais, atribuição explícita, água e sobrecargas: implementados no recorte inicial. As regras físicas que combinam materiais/água dependem do contrato do motor.
 3. Casos de análise: implementados no recorte de cadastro e prévia, com identidade própria e vínculo à seção.
 4. **Conferência integrada e distribuição 0.1.0 — implementadas:** escopos por seção/caso, dependências compartilhadas, navegação, relatório, limite de arquivo simétrico e instaladores Windows/Linux disponíveis no Launcher. A homologação manual nativa completa continua pendente.
-5. **Contrato de transferência de entradas — implementado.** O recorte aprovado de D2 já sustenta o peso próprio. Concluir as regras restantes da especificação #30 e o catálogo #31 para os próximos cálculos: perfis numéricos, tratamento das faces verticais, água e comportamento de falhas.
+5. **Contrato de transferência de entradas — implementado.** O recorte aprovado de D2 sustenta o peso próprio. O catálogo da #31 está publicado; continuam as regras gerais restantes da #30, incluindo valores de fronteira de R3/R4, tratamento de faces verticais, água e comportamento de falhas fora do recorte atual.
 6. **Preparações, entrada mecânica, Fellenius e Bishop em círculo fixo — implementados no recorte documentado.**
-7. **Busca circular determinística — implementada no recorte documentado.** Próxima etapa: comparar casos de referência com superfícies conhecidas e malhas refinadas, revisar #30/#31 e preparar um relatório de resultados que preserve as hipóteses da análise.
+7. **Busca circular determinística e regressão independente — implementadas no recorte documentado.** O catálogo da #6 compara superfícies fixas e uma malha conhecida em dois refinamentos, distinguindo preparo completo de equações em fatias prescritas. Próximas etapas: revisão do evento geométrico coincidente de A01/A01-B, parecer independente da #44, cenários adicionais da #45, decisões gerais da #30 e homologação nativa. Resultados de cada ensaio ficam na discussão da issue.
 8. Especificar métodos rigorosos, superfícies não circulares e estabilidade com reforços. Especificar separadamente verificações/dimensionamento das contenções.
 
 A distribuição desktop exige revisão nativa, instaladores, notas, catálogo/Launcher e procedimento de atualização. Compilação de CI não publica uma versão e não dispensa essa revisão.

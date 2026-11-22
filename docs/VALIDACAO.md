@@ -36,6 +36,12 @@ Os fluxos Chromium verificam criação, edição, rascunhos, desenho/cancelament
 
 ## Limites
 
+### Catálogo independente de preparação e métodos
+
+Os [casos de referência](CASOS-DE-REFERENCIA.md) preservam os sete controles da entrega da [openstruct-front #31, publicada em 20/11/2026](https://github.com/ricardocorsini/openstruct-front/issues/31#issuecomment-7047662690), com alcance separado: cinco secos/79 fatias percorrem o preparo completo; A01/A01-B/48 fatias verificam as equações em fatias prescritas e, separadamente, o bloqueio geométrico `cuts-too-close`. O último segmento de água é colinear com o terreno; raízes distintas por cerca de 1,42×10⁻¹⁴ m são colapsadas pelo arredondamento histórico da referência, mas preservadas pelo preparador atual. Não se mudou a política R3 ou a tolerância para fazer esses casos passarem.
+
+H-W05 acrescenta 15 fatias de solo homogêneo com pressão positiva, verificadas desde a preparação; é um novo caso próprio, sem publicação ou aceite humano anteriores. STRAT acrescenta o caso ilustrativo estratificado com água e sobrecarga, o círculo fixo e a avaliação independente dos 27 candidatos em aberturas de 3° e 1,5°, com identidade do mínimo, bordas e contagens por método. Reprodutores Python usam somente a biblioteca padrão, sem saídas do GeoStruct para gerar os esperados. P0/P1, intermediários, estados e trajetória de Bishop são preservados; A01 converge mas é rejeitado por tração somente na camada com fatias prescritas, sem alegar preparo integrado bem-sucedido. O documento registra tolerâncias por grandeza, a matriz R0–R6, reprodução com `--check`, limites de geometria/modos mistos e a revisão humana pendente na #44. As referências não calibram defaults universais nem declaram mínimo global ou conformidade normativa.
+
 ### Fellenius em círculo fixo
 
 Casos analíticos conferem normal projetada, coesão/atrito, força de carga constante com braços distintos, sinais e FS. A transcrição de nove fatias de Duncan fig. 7.34 reproduz FS ≈ 1,186281 após conversão SI, distinguindo a variante C-12 da C-13. O modelo próprio com preparação completa verifica refinamento, translação, espelhamento/sentido e água/modo. Testes de diagnóstico cobrem limiares exatos, tração tolerada/rejeitada sem corte para zero, resistência nula e soma não positiva, cancelamento, finitude, underflow, revisão, método selecionado, modos mistos e face vertical.
@@ -92,7 +98,7 @@ Os testes do adaptador cobrem origem/unidades, conversão X/Z sem espelhamento, 
 
 ### Alcance das verificações
 
-As verificações cobrem o modelador, as preparações, os recortes de Fellenius/Bishop em círculo fixo e a busca em malha. Os casos analíticos e as fatias transcritas verificam as equações e a classificação nas condições documentadas. A homologação integral em geometrias publicadas e casos de projeto tem escopo próprio. A revisão independente de engenharia continua nas issues #30/#31 do frontend.
+As verificações cobrem o modelador, as preparações, os recortes de Fellenius/Bishop em círculo fixo e a busca em malha. Os casos analíticos, as fatias transcritas e o [catálogo independente](CASOS-DE-REFERENCIA.md) verificam equações, preparação e classificação nas condições documentadas. A publicação e o aceite das referências da #31 não encerram a homologação em casos de projeto. A revisão humana independente segue na [openstruct-front #44](https://github.com/ricardocorsini/openstruct-front/issues/44), os cenários geométricos adicionais na [#45](https://github.com/ricardocorsini/openstruct-front/issues/45), e o aceite integral da especificação continua na [#30/PR #37](https://github.com/ricardocorsini/openstruct-front/pull/37).
 
 Compilar um executável nativo não comprova sua interação com todos os ambientes. Antes de distribuir instaladores, conferir manualmente em Linux e Windows: abrir/salvar, cancelamento de diálogo, permissões, fechamento com alterações, impressão, escala de tela, zoom/pan e teclado. Validar Linux WebKitGTK e Windows WebView2 além do Chromium dos testes.
 
