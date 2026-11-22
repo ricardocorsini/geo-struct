@@ -16,6 +16,7 @@ import {
   parseCoordinates,
   parseNumber,
 } from "../domain/geometry";
+import { CsvImportDialog } from "./CsvImportDialog";
 
 const labels: Record<Selection["kind"], string> = {
   project: "Dados do projeto",
@@ -84,9 +85,10 @@ export function Inspector({
   const [paste, setPaste] = useState("");
   const [error, setError] = useState("");
   const [dirty, setDirty] = useState(false);
+  const [csvOpen, setCsvOpen] = useState(false);
   useEffect(() => {
-    onDirty(dirty);
-  }, [dirty, onDirty]);
+    onDirty(dirty || csvOpen);
+  }, [dirty, csvOpen, onDirty]);
   const change = (key: string, value: string) => {
     setValues((v) => ({ ...v, [key]: value }));
     setDirty(true);
@@ -483,6 +485,25 @@ export function Inspector({
           )}
           {showCoordinates && (
             <>
+              {(selection.kind === "terrain" ||
+                selection.kind === "region") && (
+                <div>
+                  <button
+                    type="button"
+                    className="secondary"
+                    disabled={dirty}
+                    onClick={() => setCsvOpen(true)}
+                  >
+                    Importar CSV
+                  </button>
+                  {dirty && (
+                    <p className="hint">
+                      Aplique ou descarte as propriedades em edição antes de
+                      importar CSV.
+                    </p>
+                  )}
+                </div>
+              )}
               <div className="field-heading">
                 Coordenadas <span>m</span>
               </div>
@@ -599,6 +620,24 @@ export function Inspector({
           </button>
         </div>
       </form>
+      {csvOpen &&
+        (selection.kind === "terrain" || selection.kind === "region") && (
+          <CsvImportDialog
+            project={project}
+            section={section}
+            target={
+              selection.kind === "region"
+                ? { kind: "region", id: selection.id }
+                : { kind: "terrain" }
+            }
+            onClose={() => setCsvOpen(false)}
+            onApply={(next) => {
+              setCsvOpen(false);
+              onDirty(false);
+              onApply(next);
+            }}
+          />
+        )}
     </aside>
   );
 }

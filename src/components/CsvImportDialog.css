@@ -1,0 +1,89 @@
+.csv-import {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+.csv-file-picker .field {
+  margin-bottom: 6px;
+}
+.csv-file-status {
+  margin: 6px 0 0;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+.csv-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.csv-options .field {
+  margin: 0;
+  min-width: 0;
+}
+.csv-options select {
+  max-width: 100%;
+}
+.csv-import .info-card,
+.csv-import .form-error {
+  margin: 0;
+}
+.csv-contour-preview {
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--panel);
+}
+.csv-contour-preview svg {
+  display: block;
+  width: 100%;
+  max-height: 180px;
+}
+.csv-contour-preview polygon,
+.csv-contour-preview polyline {
+  stroke: var(--accent);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  fill: none;
+}
+.csv-contour-preview polygon {
+  fill: var(--accent-soft);
+}
+.csv-contour-preview figcaption {
+  padding: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.csv-table-wrap {
+  max-height: 230px;
+  overflow: auto;
+  border: 1px solid var(--border);
+}
+.csv-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.csv-table caption {
+  padding: 8px;
+  text-align: left;
+  font-weight: 600;
+}
+.csv-table th,
+.csv-table td {
+  border-top: 1px solid var(--border);
+  padding: 7px 10px;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.csv-table th {
+  background: var(--panel);
+}
+.csv-import .dialog-actions {
+  margin-top: 0;
+}
+@media (max-width: 650px) {
+  .csv-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

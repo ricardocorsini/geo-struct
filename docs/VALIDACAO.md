@@ -10,6 +10,19 @@
 
 Os artefatos do CI incluem traces de falhas, sem capturas de imagens. Resultados de uma execução específica devem ser conferidos pelo SHA no GitHub Actions.
 
+### Importação CSV — primeiro incremento da #9 (19/11/2026)
+
+Validação local no Windows com Node 24.22.2, a partir da master `de00f77`, na branch `issue-9-importacao-csv`:
+
+- Instalação limpa: `npm ci --offline --cache ../npm-cache --maxsockets=1` concluída com o cache local, sem alterações de dependências.
+- `npm run check -- --maxWorkers=2`: **490 testes passaram**, incluindo 39 de interpretação/aplicação CSV e 16 de leitura web/adaptador nativo.
+- `npm run test:e2e -- --workers=2`: **93 testes passaram** no Chrome local via Playwright, incluindo sete cenários CSV e os fluxos anteriores.
+- `npm run build` e `npm run format:check`: aprovados. O build mantém avisos de tamanho do bundle e anotações da dependência Zod.
+
+Os casos CSV verificam unidades m/cm/mm, escolha de cabeçalho e colunas, separadores e aspas, limites e UTF-8 inválido, equivalência com X/Z manual, geometria inválida, isolamento de regiões/seções, cancelamento e histórico em uma operação. O fechamento cancelado preserva a prévia. Também foi conferida a janela mínima de 960 × 640 no tema claro e a janela de 1280 × 720 no tema escuro.
+
+Os testes do adaptador nativo usam mocks: não comprovam o seletor, as permissões ou o uso real no Tauri. Compilações desktop no CI e homologação nativa permanecem pendentes nesta entrega local. O formato permanece `geostruct/4`; cálculos e critérios geotécnicos não foram alterados. A importação DXF continua pendente na #9.
+
 ### Evolução da geometria e edição
 
 Testes adicionais verificam interfaces com subdivisões diferentes, conservação de área e ausência de sobreposição após editar/dividir, limites de pontos, identidades/materiais, cópia inválida, precisão/captura e faces verticais. O arquivo de exemplo da primeira versão é lido e regravado sem alterar seus dados. Os fluxos de interface cobrem edição compartilhada e histórico, inserção/exclusão gráfica, divisão com persistência, rejeição de cópia, deslocamento relativo, medição sem modificar o modelo e entrada de face vertical na janela mínima.
@@ -34,7 +47,31 @@ O domínio cobre criação com escolhas pendentes, condições herdadas e própr
 
 Os fluxos Chromium verificam criação, edição, rascunhos, desenho/cancelamento, cópia do círculo de tentativa, prévia de condições, busca sem geração de candidatos, arquivo e relatório, gerenciador na janela mínima, exclusão de faixa referenciada, operações de seção com casos, navegação por diagnóstico e recuperação v3. As verificações não validam interseções do círculo, admissibilidade física, malha de candidatos ou FS.
 
+### Perfil numérico e ação Calcular caso
+
+Os testes de domínio verificam os grupos persistidos no formato v5, migração com campos pendentes e independência dos perfis por caso, modo e método. A prontidão distingue rascunhos, dados físicos ausentes, condições ativas, superfície, perfil efetivo e limites da malha, conservando os diagnósticos existentes. Configurações inativas e materiais sem uso não recebem valores presumidos nem impedem a execução. A identidade inclui o perfil efetivo, mesmo quando a revisão da entrada física não muda.
+
+Os testes da orquestração verificam uma única preparação comum do círculo fixo, a mesma mecânica para os métodos selecionados, equivalência com os solvers existentes e preservação de falhas independentes. Cobrem diagnósticos sem FS e a conservação de geometria/pesos quando a pressão é bloqueada. Testes do executor usam timers controlados e um adaptador de Worker para verificar progresso, cancelamento sem resultado parcial, reinício, desmontagem, falhas de execução e rejeição de respostas de outra geração, caso ou perfil.
+
+Os fluxos Chromium exercitam **Análise → Calcular caso** por botão e teclado na janela mínima, círculo fixo e busca, métodos selecionados, comparação, navegação às pendências em **Conferir modelo**, rascunhos e correção de perfil inválido. Incluem progresso/cancelamento, mudança de contexto e preservação do arquivo sem resultados. As inspeções e ações individuais continuam cobertas pelos fluxos próprios de geometria, preparações e métodos. Esses testes verificam a coordenação da execução; a evidência de engenharia permanece nos casos independentes de cada recorte.
+
+### Aba Resultados e seleção sincronizada
+
+Os testes do estado de resultados distinguem registros atuais, desatualizados e ausentes por projeto, caso, sessão e identidade efetiva. Cobrem retorno ao resultado de outro caso já calculado, rascunho e descarte, alteração de perfil/entrada, reabertura com os mesmos IDs e início de nova execução sem reaproveitar resultados parciais. A comparação exige resultados completos da mesma superfície e recusa revisão, círculo, discretização ou limiares diferentes, bem como resultados sem FS positivo admissível.
+
+O controlador de inspeção da busca usa um adaptador de Worker para conferir seleção de candidato, geração, referência do registro, cancelamento e desmontagem. As respostas atrasadas de outra seleção ou sessão não podem atualizar a superfície apresentada. A seleção de método e fatia é vinculada aos números originais da geometria preparada.
+
+Os fluxos Chromium cobrem a aba em 960 × 640, abertura e seleção por teclado, círculo fixo, 27 candidatos, mínimo do candidato 25 com avisos de borda e distinção entre comparação no mesmo círculo e mínimos por método. As parcelas exibidas usam valores congelados do catálogo STRAT: o candidato 14 corresponde ao círculo fixo e permite comparar peso e normal de uma mesma fatia nos dois métodos, incluindo sua inspeção completa. O SVG é conferido por dados/DOM para candidato, método e fatia realçada. Incluem cache por caso, rascunhos preservados entre abas, invalidação por entrada/perfil, não convergência, resistência nula com FS zero distinto de ausência de FS, rejeição, descarte geométrico, círculo fixo sem interseções conservando seu contorno diagnóstico e cancelamento com progresso sem resultado parcial. Os arquivos continuam sem resultados serializados.
+
+Essas verificações exercitam a apresentação e a identidade dos dados; não ampliam o alcance dos [casos de referência](CASOS-DE-REFERENCIA.md), alteram suas fontes ou substituem a revisão de engenharia dos recortes físicos.
+
 ## Limites
+
+### Catálogo independente de preparação e métodos
+
+Os [casos de referência](CASOS-DE-REFERENCIA.md) preservam os sete controles da entrega da [openstruct-front #31, publicada em 20/11/2026](https://github.com/ricardocorsini/openstruct-front/issues/31#issuecomment-7047662690), com alcance separado: cinco secos/79 fatias percorrem o preparo completo; A01/A01-B/48 fatias verificam as equações em fatias prescritas e, separadamente, o bloqueio geométrico `cuts-too-close`. O último segmento de água é colinear com o terreno; raízes distintas por cerca de 1,42×10⁻¹⁴ m são colapsadas pelo arredondamento histórico da referência, mas preservadas pelo preparador atual. Não se mudou a política R3 ou a tolerância para fazer esses casos passarem.
+
+H-W05 acrescenta 15 fatias de solo homogêneo com pressão positiva, verificadas desde a preparação; é um novo caso próprio, sem publicação ou aceite humano anteriores. STRAT acrescenta o caso ilustrativo estratificado com água e sobrecarga, o círculo fixo e a avaliação independente dos 27 candidatos em aberturas de 3° e 1,5°, com identidade do mínimo, bordas e contagens por método. Reprodutores Python usam somente a biblioteca padrão, sem saídas do GeoStruct para gerar os esperados. P0/P1, intermediários, estados e trajetória de Bishop são preservados; A01 converge mas é rejeitado por tração somente na camada com fatias prescritas, sem alegar preparo integrado bem-sucedido. O documento registra tolerâncias por grandeza, a matriz R0–R6, reprodução com `--check`, limites de geometria/modos mistos e a revisão humana pendente na #44. As referências não calibram defaults universais nem declaram mínimo global ou conformidade normativa.
 
 ### Fellenius em círculo fixo
 
@@ -92,7 +129,7 @@ Os testes do adaptador cobrem origem/unidades, conversão X/Z sem espelhamento, 
 
 ### Alcance das verificações
 
-As verificações cobrem o modelador, as preparações, os recortes de Fellenius/Bishop em círculo fixo e a busca em malha. Os casos analíticos e as fatias transcritas verificam as equações e a classificação nas condições documentadas. A homologação integral em geometrias publicadas e casos de projeto tem escopo próprio. A revisão independente de engenharia continua nas issues #30/#31 do frontend.
+As verificações cobrem o modelador, as preparações, os recortes de Fellenius/Bishop em círculo fixo e a busca em malha. Os casos analíticos, as fatias transcritas e o [catálogo independente](CASOS-DE-REFERENCIA.md) verificam equações, preparação e classificação nas condições documentadas. A publicação e o aceite das referências da #31 não encerram a homologação em casos de projeto. A revisão humana independente segue na [openstruct-front #44](https://github.com/ricardocorsini/openstruct-front/issues/44), os cenários geométricos adicionais na [#45](https://github.com/ricardocorsini/openstruct-front/issues/45), e o aceite integral da especificação continua na [#30/PR #37](https://github.com/ricardocorsini/openstruct-front/pull/37).
 
 Compilar um executável nativo não comprova sua interação com todos os ambientes. Antes de distribuir instaladores, conferir manualmente em Linux e Windows: abrir/salvar, cancelamento de diálogo, permissões, fechamento com alterações, impressão, escala de tela, zoom/pan e teclado. Validar Linux WebKitGTK e Windows WebView2 além do Chromium dos testes.
 
@@ -102,4 +139,4 @@ A recuperação usa armazenamento local e pode ser bloqueada pelo navegador. O c
 
 Em **Análise → Conferir modelo**, filtre por seção/caso e severidade. Cada caso inclui a geometria e os materiais compartilhados, além das condições efetivas de água/cargas do cenário. Materiais sem uso aparecem em um escopo próprio. Clique numa pendência para abrir o cadastro correspondente; rascunhos continuam protegidos. O relatório de entradas inclui a mesma conferência por escopo. Pendências compartilhadas aparecem em cada caso afetado, portanto as contagens não são somáveis como ocorrências únicas.
 
-A conferência é derivada dos dados aplicados e não altera o formato v4 ou cria resultados. Ausência de pendências não comprova admissibilidade das superfícies nem estabilidade. Testes cobrem dependências compartilhadas, isolamento, condições próprias, ida/volta do arquivo, navegação e rascunhos. O salvamento recusa projetos acima de 8 MB para evitar produzir um arquivo que o leitor rejeitaria; o modelo aberto permanece disponível para edição.
+A conferência é derivada dos dados aplicados e não altera o formato v5 ou cria resultados. Ausência de pendências não comprova admissibilidade das superfícies nem estabilidade. Testes cobrem dependências compartilhadas, isolamento, condições próprias, ida/volta do arquivo, navegação e rascunhos. O salvamento recusa projetos acima de 8 MB para evitar produzir um arquivo que o leitor rejeitaria; o modelo aberto permanece disponível para edição.

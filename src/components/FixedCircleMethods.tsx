@@ -6,6 +6,7 @@ import type { BishopResult } from "../core/bishop";
 import type { NumericalProfile } from "../domain/model";
 import { FelleniusPanel } from "./FelleniusPanel";
 import { BishopPanel, formatResultNumber } from "./BishopPanel";
+import type { FixedCaseCalculation } from "../lib/case-calculation";
 
 type Evaluation<T> = {
   mechanics: SliceMechanicsPreparation | null;
@@ -16,10 +17,14 @@ export function FixedCircleMethods({
   mechanics,
   initialProfile,
   onProfileChange,
+  calculatedMethods,
+  executionBlocked = false,
 }: {
   preparation: InputPreparation;
   mechanics: SliceMechanicsPreparation | null;
   initialProfile: NumericalProfile;
+  calculatedMethods?: FixedCaseCalculation["methods"];
+  executionBlocked?: boolean;
   onProfileChange: (
     group: "fellenius" | "bishop",
     fields: Record<string, string>,
@@ -27,8 +32,16 @@ export function FixedCircleMethods({
 }) {
   const [fellenius, setFellenius] = useState<Evaluation<FelleniusResult>>(null);
   const [bishop, setBishop] = useState<Evaluation<BishopResult>>(null);
-  const f = fellenius?.mechanics === mechanics ? fellenius.result : null;
-  const b = bishop?.mechanics === mechanics ? bishop.result : null;
+  const f = executionBlocked
+    ? null
+    : (calculatedMethods?.find(
+        (r): r is FelleniusResult => r.method === "fellenius",
+      ) ?? (fellenius?.mechanics === mechanics ? fellenius.result : null));
+  const b = executionBlocked
+    ? null
+    : (calculatedMethods?.find(
+        (r): r is BishopResult => r.method === "bishop",
+      ) ?? (bishop?.mechanics === mechanics ? bishop.result : null));
   const bothSelected =
     preparation.snapshot?.input.analysis.methods.length === 2;
   const sameThresholds =
@@ -53,6 +66,8 @@ export function FixedCircleMethods({
       <FelleniusPanel
         preparation={preparation}
         mechanics={mechanics}
+        suppliedResult={f}
+        executionBlocked={executionBlocked}
         initialProfile={initialProfile.fellenius}
         onProfileChange={(fields) => onProfileChange("fellenius", fields)}
         onResult={(result) => setFellenius({ mechanics, result })}
@@ -60,6 +75,8 @@ export function FixedCircleMethods({
       <BishopPanel
         preparation={preparation}
         mechanics={mechanics}
+        suppliedResult={b}
+        executionBlocked={executionBlocked}
         initialProfile={initialProfile.bishop}
         onProfileChange={(fields) => onProfileChange("bishop", fields)}
         onResult={(result) => setBishop({ mechanics, result })}

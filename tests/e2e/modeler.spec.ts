@@ -166,9 +166,9 @@ test("duplica seções com geometria independente e materiais compartilhados", a
 test("arquivo inválido não substitui o projeto aberto", async ({ page }) => {
   await example(page);
   await loadProject(page, { format: "geostruct", version: 999 });
-  await expect(page.getByRole("status")).toContainText(
-    "incompatível ou inválido",
-  );
+  await expect(
+    page.getByRole("status", { name: "Notificação do aplicativo" }),
+  ).toContainText("incompatível ou inválido");
   await expect(page.locator(".document-title")).toContainText(
     "Talude em duas camadas",
   );

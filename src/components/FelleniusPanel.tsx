@@ -18,12 +18,16 @@ export function FelleniusPanel({
   onResult,
   initialProfile,
   onProfileChange,
+  suppliedResult,
+  executionBlocked = false,
 }: {
   preparation: InputPreparation;
   mechanics: SliceMechanicsPreparation | null;
   onResult: (result: FelleniusResult | null) => void;
   initialProfile: NumericalProfile["fellenius"];
   onProfileChange: (fields: Record<string, string>) => void;
+  suppliedResult?: FelleniusResult | null;
+  executionBlocked?: boolean;
 }) {
   const [driving, setDriving] = useState(() =>
     String(initialProfile.drivingThresholdKNPerM ?? ""),
@@ -36,12 +40,15 @@ export function FelleniusPanel({
     result: FelleniusResult;
   } | null>(null);
   const [inspect, setInspect] = useState(false);
-  const result = evaluation?.mechanics === mechanics ? evaluation.result : null;
+  const result = executionBlocked
+    ? null
+    : (suppliedResult ??
+      (evaluation?.mechanics === mechanics ? evaluation.result : null));
   const data = result?.calculation;
   const selected =
     preparation.snapshot?.input.analysis.methods.includes("fellenius");
   const calculate = () => {
-    if (!selected || !mechanics) return;
+    if (!selected || !mechanics || executionBlocked) return;
     const result = solveFellenius(preparation, mechanics, {
       drivingThresholdKNPerM: parseNumber(driving) ?? NaN,
       tensionToleranceKPa: parseNumber(tension) ?? NaN,
@@ -100,7 +107,9 @@ export function FelleniusPanel({
       <button
         className="secondary"
         type="button"
-        disabled={!selected || mechanics?.status !== "prepared"}
+        disabled={
+          !selected || mechanics?.status !== "prepared" || executionBlocked
+        }
         onClick={calculate}
       >
         Calcular Fellenius

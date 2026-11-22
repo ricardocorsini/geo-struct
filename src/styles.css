@@ -320,6 +320,41 @@ button svg {
 .analysis-note strong {
   color: var(--accent);
 }
+.calculation-group {
+  flex-shrink: 0;
+}
+.calculate-case {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.calculate-case svg {
+  color: var(--accent);
+}
+.case-calculation-status {
+  width: 260px;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 7px;
+  font-size: 10px;
+  line-height: 1.2;
+  color: var(--muted);
+}
+.case-calculation-status strong {
+  color: var(--text);
+  font-size: 11px;
+}
+.calculation-case,
+.calculation-message {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.case-calculation-status progress {
+  height: 5px;
+  width: 100%;
+}
 .workspace {
   display: grid;
   grid-template-columns: var(--left-panel) 5px minmax(260px, 1fr) 5px var(
@@ -962,6 +997,64 @@ button svg {
   font-weight: 600;
   letter-spacing: -0.2px;
   margin: 0 0 19px;
+}
+.results-workspace {
+  min-width: 0;
+  border-left: 1px solid var(--border);
+}
+.results-fields {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.results-fields h2 {
+  margin-bottom: 10px;
+}
+.results-fields h3 {
+  font-size: 13px;
+  margin: 12px 0 7px;
+}
+.results-fields > section,
+.results-fields > details {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  margin-top: 15px;
+}
+.results-fields summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.results-fields .search-actions {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.results-fields .search-actions button {
+  min-width: 0;
+  white-space: normal;
+  padding: 7px 9px;
+}
+.results-values {
+  margin: 0;
+}
+.results-values > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(74px, auto);
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+.results-values dt {
+  color: var(--muted);
+}
+.results-values dd {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.results-diagnostics ul {
+  padding-left: 18px;
+}
+.results-fields progress {
+  width: 100%;
 }
 .draft-badge {
   font-size: 9px;

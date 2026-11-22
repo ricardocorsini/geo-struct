@@ -63,12 +63,16 @@ export function BishopPanel({
   onResult,
   initialProfile,
   onProfileChange,
+  suppliedResult,
+  executionBlocked = false,
 }: {
   preparation: InputPreparation;
   mechanics: SliceMechanicsPreparation | null;
   onResult: (result: BishopResult | null) => void;
   initialProfile: NumericalProfile["bishop"];
   onProfileChange: (fields: Record<string, string>) => void;
+  suppliedResult?: BishopResult | null;
+  executionBlocked?: boolean;
 }) {
   const [values, setValues] = useState(() => {
     const values = { ...emptyFields };
@@ -81,12 +85,15 @@ export function BishopPanel({
     result: BishopResult;
   } | null>(null);
   const [inspect, setInspect] = useState(false);
-  const result = evaluation?.mechanics === mechanics ? evaluation.result : null;
+  const result = executionBlocked
+    ? null
+    : (suppliedResult ??
+      (evaluation?.mechanics === mechanics ? evaluation.result : null));
   const selected =
     preparation.snapshot?.input.analysis.methods.includes("bishop");
   const last = result?.calculation?.evaluation;
   const calculate = () => {
-    if (!selected || !mechanics) return;
+    if (!selected || !mechanics || executionBlocked) return;
     const profile = Object.fromEntries(
       fields.map(({ key }) => [key, parseNumber(values[key]) ?? NaN]),
     ) as BishopProfile;
@@ -128,7 +135,9 @@ export function BishopPanel({
       <button
         className="secondary"
         type="button"
-        disabled={!selected || mechanics?.status !== "prepared"}
+        disabled={
+          !selected || mechanics?.status !== "prepared" || executionBlocked
+        }
         onClick={calculate}
       >
         Calcular Bishop

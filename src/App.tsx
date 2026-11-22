@@ -95,6 +95,14 @@ import { defaultProject } from "./domain/default-project";
 import type { FixedCirclePreparation } from "./core/fixed-circle";
 import type { GeometryFields } from "./components/FixedCirclePreview";
 import type { SearchOverlay } from "./components/CircularSearchPanel";
+import {
+  getCaseCalculationReadiness,
+  type FixedCaseCalculation,
+} from "./lib/case-calculation";
+import { useCaseCalculation } from "./lib/use-case-calculation";
+import { useCaseResults } from "./lib/use-case-results";
+import { ResultsWorkspace } from "./components/ResultsWorkspace";
+import type { RibbonCalculation } from "./components/Ribbon";
 
 type Question = {
   title: string;
@@ -111,6 +119,7 @@ function readPreference(key: string, fallback: string) {
 }
 export default function App() {
   const [h, setH] = useState<History<Project> | null>(null);
+  const [resultSession, setResultSession] = useState(0);
   const project = h?.present ?? null;
   const [sectionId, setSectionId] = useState(""),
     [selection, setSelection] = useState<Selection>({ kind: "terrain" });
@@ -153,6 +162,9 @@ export default function App() {
   const [searchOverlay, setSearchOverlay] = useState<SearchOverlay | null>(
     null,
   );
+  // Conserva apenas as preparações para inspeção ao editar limiares do solver.
+  const [centralPreparation, setCentralPreparation] =
+    useState<FixedCaseCalculation | null>(null);
   const [notice, setNotice] = useState(""),
     [question, setQuestion] = useState<Question | null>(null),
     [dialog, setDialog] = useState<
@@ -221,17 +233,109 @@ export default function App() {
   // Alterar só o perfil conserva a entrada mecânica e as inspeções já preparadas.
   const preparationRevision = JSON.stringify(preparation);
   const preparedCase = useMemo(() => preparation, [preparationRevision]);
+  const calculationReadiness = useMemo(
+    () =>
+      getCaseCalculationReadiness(
+        project,
+        selectedCase?.id ?? null,
+        draftDirty || drawing,
+      ),
+    [project, selectedCase?.id, draftDirty, drawing],
+  );
+  const calculation = useCaseCalculation(calculationReadiness, {
+    projectId: project?.id ?? null,
+    caseId: selectedCase?.id ?? null,
+    sessionId: resultSession,
+  });
+  const results = useCaseResults(calculation.results);
+  const resultsMode = tab === "Resultados";
+  const appliedResultInput =
+    results.view.status === "current"
+      ? results.view.record.ready.preparation.snapshot?.input
+      : null;
+  const fixedResultCircle =
+    appliedResultInput?.surface.mode === "fixed"
+      ? appliedResultInput.surface.circle
+      : null;
+  const selectedResultCircle =
+    results.surface?.location?.circle ??
+    results.surface?.geometry.geometry?.circle ??
+    (fixedResultCircle &&
+    fixedResultCircle.x !== null &&
+    fixedResultCircle.z !== null &&
+    fixedResultCircle.radius !== null
+      ? {
+          x: fixedResultCircle.x,
+          z: fixedResultCircle.z,
+          radius: fixedResultCircle.radius,
+        }
+      : null);
+  const centralFixed = calculation.fixed;
+  useEffect(() => {
+    if (centralFixed) {
+      setCentralPreparation(centralFixed);
+      setSlicePreview(centralFixed.geometry);
+    }
+  }, [centralFixed]);
+  const previewCandidate = centralFixed?.geometry ?? slicePreview;
   const currentSlices =
     preparedCase?.snapshot &&
-    slicePreview?.inputRevision === preparedCase.snapshot.revision
-      ? slicePreview
+    previewCandidate?.inputRevision === preparedCase.snapshot.revision &&
+    previewCandidate.profile.toleranceM ===
+      parseNumber(geometryFields.tolerance) &&
+    previewCandidate.profile.maxArcDegrees === parseNumber(geometryFields.angle)
+      ? previewCandidate
       : null;
+  const preparedCalculation =
+    centralFixed?.geometry === currentSlices
+      ? centralFixed
+      : centralPreparation?.geometry === currentSlices
+        ? centralPreparation
+        : null;
   const searchedGeometry =
     preparedCase?.snapshot &&
     searchOverlay?.inputRevision === preparedCase.snapshot.revision
       ? searchOverlay.geometry
       : null;
   const dirty = !!project && JSON.stringify(project) !== saved;
+  const execution = calculation.state;
+  const calculationStatus: RibbonCalculation["status"] =
+    calculationReadiness.status === "blocked"
+      ? "pending"
+      : execution.status === "idle"
+        ? "ready"
+        : execution.status === "running"
+          ? "calculating"
+          : execution.status;
+  const calculationMessage =
+    calculationReadiness.status === "blocked"
+      ? calculationReadiness.message
+      : execution.status === "failed"
+        ? execution.message
+        : execution.status === "cancelled"
+          ? "Resultado parcial descartado. Pronto para repetir o cálculo."
+          : execution.status === "running"
+            ? execution.mode === "search"
+              ? `${execution.progress.completed} de ${execution.progress.total} círculos avaliados.`
+              : "Preparando as fatias e executando os métodos selecionados."
+            : execution.status === "completed"
+              ? execution.mode === "search"
+                ? `${execution.search.candidates.length} círculos avaliados. Consulte resultados e diagnósticos.`
+                : execution.fixed.geometry.status === "prepared"
+                  ? `${execution.fixed.geometry.geometry.slices.length} fatias. Consulte resultados e diagnósticos.`
+                  : "Fatias não preparadas. Consulte os diagnósticos nas propriedades."
+              : calculationReadiness.mode === "search"
+                ? `${calculationReadiness.grid.total} círculos · métodos do caso aplicado.`
+                : "Preparação comum e métodos do caso aplicado.";
+  const ribbonCalculation: RibbonCalculation = {
+    status: calculationStatus,
+    caseName: selectedCase?.name ?? "Nenhum caso selecionado",
+    message: calculationMessage,
+    progress:
+      execution.status === "running" && execution.mode === "search"
+        ? execution.progress
+        : undefined,
+  };
   const notify = useCallback((message: string) => {
     setNotice(message);
     if (noticeTimer.current) clearTimeout(noticeTimer.current);
@@ -373,6 +477,7 @@ export default function App() {
     savedState: boolean,
     migrated = false,
   ) => {
+    setResultSession((n) => n + 1);
     setH(history(p));
     setGeometryDraft(null);
     setSectionId(p.sections[0].id);
@@ -421,13 +526,16 @@ export default function App() {
     if (s.kind === "case") {
       const c = project?.analysisCases.find((c) => c.id === s.id);
       if (c) setSectionId(c.sectionId);
-      setTab("Análise");
+      if (tab !== "Resultados") setTab("Análise");
+    } else if (tab === "Resultados") {
+      setTab("Geometria");
     }
     setInspectorEpoch((n) => n + 1);
   };
   const chooseSection = async (id: string) => {
     if (!(await guardDraft())) return;
     setSectionId(id);
+    if (tab === "Resultados") setTab("Geometria");
     setSelection({ kind: "terrain" });
     setTool("select");
     setInspectorEpoch((n) => n + 1);
@@ -435,6 +543,8 @@ export default function App() {
   const selectTool = async (t: Tool) => {
     if (!project || !section) return;
     if (!(await guardDraft())) return;
+    if (tab === "Resultados" && t !== "pan" && t !== "select")
+      setTab("Geometria");
     if (t === "terrain" && section.terrain.length > 0) {
       const ok = await ask(
         "Substituir o perfil?",
@@ -780,6 +890,7 @@ export default function App() {
     if (!project || !(await guardDraft())) return;
     setTool("select");
     setDialog(null);
+    if (resultsMode) setTab("Geometria");
     if (d.sectionId) setSectionId(d.sectionId);
     if (project.materials.some((m) => m.id === d.target))
       setSelection({ kind: "material", id: d.target });
@@ -864,6 +975,33 @@ export default function App() {
       return;
     }
     if (!project || !section) return;
+    if (a === "cancel-calculation") {
+      calculation.cancel();
+      return;
+    }
+    if (a === "calculate-case") {
+      if (calculationReadiness.status === "blocked") {
+        notify(calculationReadiness.message);
+        if (calculationReadiness.reason === "draft") {
+          setTab("Análise");
+          requestAnimationFrame(() =>
+            document
+              .querySelector<HTMLElement>(
+                ".inspector input, .inspector select, .inspector textarea",
+              )
+              ?.focus(),
+          );
+        } else if (calculationReadiness.reason === "case-required") {
+          setDialog("cases");
+        } else {
+          setDialog("audit");
+        }
+      } else {
+        setTool("select");
+        calculation.start();
+      }
+      return;
+    }
     if (a === "save" || a === "save-as") {
       await save(a === "save-as");
       return;
@@ -874,6 +1012,7 @@ export default function App() {
           removeRecovery();
         } catch {}
         setRecovery(null);
+        setResultSession((n) => n + 1);
         setH(null);
         setDraftDirty(false);
         setDrawing(false);
@@ -897,11 +1036,14 @@ export default function App() {
       return;
     }
     if (a === "properties") {
-      document
-        .querySelector<HTMLElement>(
-          ".inspector input, .inspector select, .inspector textarea",
-        )
-        ?.focus();
+      if (resultsMode) setTab(selectedCase ? "Análise" : "Geometria");
+      requestAnimationFrame(() =>
+        document
+          .querySelector<HTMLElement>(
+            ".inspector input, .inspector select, .inspector textarea",
+          )
+          ?.focus(),
+      );
       return;
     }
     if (a === "delete") {
@@ -1142,7 +1284,19 @@ export default function App() {
           <>
             <Ribbon
               tab={tab}
-              onTab={setTab}
+              onTab={(next) => {
+                if (next === "Resultados" && drawing) {
+                  void (async () => {
+                    if (await guardDraft()) {
+                      setTool("select");
+                      setTab(next);
+                    }
+                  })();
+                } else {
+                  setTab(next);
+                  if (next === "Resultados") setTool("select");
+                }
+              }}
               onAction={action}
               tool={tool}
               dark={dark}
@@ -1151,6 +1305,7 @@ export default function App() {
               canUndo={!!h?.past.length}
               canRedo={!!h?.future.length}
               busy={busy}
+              calculation={ribbonCalculation}
             />
             <div
               className="workspace"
@@ -1184,7 +1339,7 @@ export default function App() {
                   <span>
                     <MountainSmall />
                     {section.name}
-                    <i>Modelo</i>
+                    <i>{resultsMode ? "Resultados" : "Modelo"}</i>
                   </span>
                   <button
                     className="text-button"
@@ -1220,13 +1375,28 @@ export default function App() {
                   section={section}
                   selection={selection}
                   analysisCase={selectedCase}
-                  sliceGeometry={
-                    !draftDirty && !drawing
-                      ? (searchedGeometry ??
-                        (currentSlices?.status === "prepared"
-                          ? currentSlices.geometry
-                          : null))
+                  resultsMode={resultsMode}
+                  resultSelection={
+                    resultsMode && results.surface
+                      ? {
+                          candidate:
+                            results.surface.location?.number ?? "fixed",
+                          method: results.selection.method,
+                          sliceNumber: results.selection.sliceNumber,
+                          circle: selectedResultCircle,
+                        }
                       : null
+                  }
+                  onSelectSlice={results.selectSlice}
+                  sliceGeometry={
+                    resultsMode
+                      ? (results.overlay?.geometry ?? null)
+                      : !draftDirty && !drawing
+                        ? (searchedGeometry ??
+                          (currentSlices?.status === "prepared"
+                            ? currentSlices.geometry
+                            : null))
+                        : null
                   }
                   tool={tool}
                   dark={dark}
@@ -1250,7 +1420,9 @@ export default function App() {
                 />
                 <div className="command-line">
                   <span className="command-dot" />
-                  {instructions[tool]}
+                  {resultsMode && tool !== "pan"
+                    ? "Selecione uma fatia no desenho ou na tabela para conferir suas parcelas."
+                    : instructions[tool]}
                 </div>
                 <button
                   className="diagnostics-toggle"
@@ -1318,46 +1490,69 @@ export default function App() {
                 max={440}
                 reverse
               />
-              {selectedCase ? (
-                <CaseInspector
-                  key={`${selectedCase.id}-${inspectorEpoch}`}
-                  project={project}
-                  section={section}
-                  analysisCase={selectedCase}
-                  onApply={apply}
-                  onDirty={setDraftDirty}
-                  onDrawCircle={() => void selectTool("case-circle")}
-                  onBase={() => void select({ kind: "terrain" })}
-                  onSearchPreview={setSearchOverlay}
-                  onProfileApply={applyNumericalProfile}
-                  onDiscard={() => {
-                    setDraftDirty(false);
-                    setInspectorEpoch((epoch) => epoch + 1);
-                  }}
-                  geometryPreview={{
-                    preparation: preparedCase!,
-                    values: geometryFields,
-                    result: currentSlices,
-                    onChange: (values) => {
-                      setGeometryDraft({
-                        caseId: selectedCase.id,
-                        epoch: inspectorEpoch,
-                        values,
-                      });
-                      setSlicePreview(null);
-                    },
-                    onPrepare: setSlicePreview,
-                  }}
-                />
-              ) : (
-                <Inspector
-                  key={`${section.id}-${JSON.stringify(selection)}-${inspectorEpoch}`}
-                  project={project}
-                  section={section}
-                  selection={selection}
-                  onApply={apply}
-                  linked={precision.linked}
-                  onDirty={setDraftDirty}
+              <div style={{ display: resultsMode ? "none" : "contents" }}>
+                {selectedCase ? (
+                  <CaseInspector
+                    key={`${selectedCase.id}-${inspectorEpoch}`}
+                    project={project}
+                    section={section}
+                    analysisCase={selectedCase}
+                    onApply={apply}
+                    onDirty={setDraftDirty}
+                    onDrawCircle={() => void selectTool("case-circle")}
+                    onBase={() => void select({ kind: "terrain" })}
+                    onSearchPreview={setSearchOverlay}
+                    searchExecution={{
+                      ...calculation.searchExecution,
+                      start: () => void action("calculate-case"),
+                    }}
+                    onProfileApply={applyNumericalProfile}
+                    onDiscard={() => {
+                      setDraftDirty(false);
+                      setInspectorEpoch((epoch) => epoch + 1);
+                    }}
+                    geometryPreview={{
+                      preparation: preparedCase!,
+                      values: geometryFields,
+                      result: currentSlices,
+                      preparedCalculation,
+                      calculatedMethods:
+                        centralFixed?.geometry === currentSlices
+                          ? centralFixed?.methods
+                          : undefined,
+                      onChange: (values) => {
+                        setGeometryDraft({
+                          caseId: selectedCase.id,
+                          epoch: inspectorEpoch,
+                          values,
+                        });
+                        setSlicePreview(null);
+                      },
+                      onPrepare: (geometry) => {
+                        calculation.reset();
+                        setCentralPreparation(null);
+                        setSlicePreview(geometry);
+                      },
+                    }}
+                  />
+                ) : (
+                  <Inspector
+                    key={`${section.id}-${JSON.stringify(selection)}-${inspectorEpoch}`}
+                    project={project}
+                    section={section}
+                    selection={selection}
+                    onApply={apply}
+                    linked={precision.linked}
+                    onDirty={setDraftDirty}
+                  />
+                )}
+              </div>
+              {resultsMode && (
+                <ResultsWorkspace
+                  results={results}
+                  execution={calculation.state}
+                  caseName={selectedCase?.name ?? null}
+                  onCalculate={() => void action("calculate-case")}
                 />
               )}
             </div>
@@ -1400,7 +1595,11 @@ export default function App() {
         )}
       </div>
       {notice && (
-        <div className="toast" role="status">
+        <div
+          className="toast"
+          role="status"
+          aria-label="Notificação do aplicativo"
+        >
           <span>{notice}</span>
           <button
             className="icon-button"
@@ -1556,7 +1755,22 @@ export default function App() {
           wide
           onClose={() => setDialog(null)}
         >
-          <Audit project={project} onLocate={(d) => void locateDiagnostic(d)} />
+          <Audit
+            project={project}
+            onLocate={(d) => void locateDiagnostic(d)}
+            calculationDiagnostic={
+              selectedCase &&
+              calculationReadiness.status === "blocked" &&
+              calculationReadiness.reason !== "draft"
+                ? {
+                    level: "warning",
+                    message: calculationReadiness.message,
+                    target: selectedCase.id,
+                    sectionId: selectedCase.sectionId,
+                  }
+                : undefined
+            }
+          />
         </Dialog>
       )}
       {dialog === "cases" && project && section && (

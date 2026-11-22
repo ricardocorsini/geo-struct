@@ -353,7 +353,9 @@ test("v2 sem água ou cargas abre como não definido e relatório identifica as 
   legacy.sections[0].water = null;
   legacy.sections[0].loads = [];
   await open(page, legacy);
-  await expect(page.getByRole("status")).toContainText("versão 5");
+  await expect(
+    page.getByRole("status", { name: "Notificação do aplicativo" }),
+  ).toContainText("versão 5");
   const result = await save(page);
   expect(result.version).toBe(5);
   expect(result.sections[0]).toMatchObject({

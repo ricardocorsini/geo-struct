@@ -249,7 +249,8 @@ test("limite da malha, não convergência independente e invalidação por rascu
   await page.getByLabel("Raio máximo (m)", { exact: true }).fill("5");
   await expect(output(page)).toHaveCount(0);
   await page.getByRole("button", { name: "Descartar", exact: true }).click();
-  await expect(output(page)).toHaveCount(0);
+  // Descartar o rascunho recupera a execução retida das mesmas entradas e perfil.
+  await expect(output(page)).toContainText("4 círculos avaliados");
   await start(page).click();
   await expect(output(page)).toContainText("4 círculos avaliados");
   await page.getByRole("tab", { name: "Geometria", exact: true }).click();

@@ -194,9 +194,9 @@ test("migração v4 comunica o perfil incompleto e não inventa limiares ou resu
   };
   await page.goto("/");
   await load(page, legacy);
-  await expect(page.getByRole("status")).toContainText(
-    "próximo salvamento usará a versão 5",
-  );
+  await expect(
+    page.getByRole("status", { name: "Notificação do aplicativo" }),
+  ).toContainText("próximo salvamento usará a versão 5");
   await select(page);
   await expect(
     page.getByText("Perfil de cálculo incompleto.", { exact: false }),
@@ -252,7 +252,9 @@ test("perfil inválido protege o rascunho e arquivo inválido preserva o projeto
   await page
     .getByRole("button", { name: "Salvar projeto", exact: true })
     .click();
-  await expect(page.getByRole("status")).toContainText("antes de salvar");
+  await expect(
+    page.getByRole("status", { name: "Notificação do aplicativo" }),
+  ).toContainText("antes de salvar");
   expect(downloads).toEqual([]);
   await page.getByRole("button", { name: "Descartar", exact: true }).click();
   await expect(max).toHaveValue("100");
@@ -261,8 +263,8 @@ test("perfil inválido protege o rascunho e arquivo inválido preserva o projeto
   const invalid: Project = structuredClone(p);
   invalid.analysisCases[0].numericalProfile.geometry.maxArcDegrees = 4;
   await load(page, invalid);
-  await expect(page.getByRole("status")).toContainText(
-    "incompatível ou inválido",
-  );
+  await expect(
+    page.getByRole("status", { name: "Notificação do aplicativo" }),
+  ).toContainText("incompatível ou inválido");
   expect(await save(page)).toEqual(p);
 });

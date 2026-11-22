@@ -14,7 +14,7 @@ npm ci
 npm run dev
 ```
 
-Abra http://127.0.0.1:1420 e escolha **Abrir projeto padrão** para experimentar a análise. O comando também fica em **Arquivo → Projeto**. O talude demonstrativo tem duas camadas, linha piezométrica, sobrecarga de crista e casos para busca circular e círculo fixo. A busca abre selecionada, com perfil preenchido para Fellenius e Bishop Simplificado. Use **Iniciar busca circular** para avaliar os 27 círculos.
+Abra http://127.0.0.1:1420 e escolha **Abrir projeto padrão** para experimentar a análise. O comando também fica em **Arquivo → Projeto**. O talude demonstrativo tem duas camadas, linha piezométrica, sobrecarga de crista e casos para busca circular e círculo fixo. A busca abre selecionada, com perfil preenchido para Fellenius e Bishop Simplificado. Use **Análise → Calcular caso** para avaliar os 27 círculos e abra a aba **Resultados** para selecionar a superfície, o método e a fatia.
 
 Para começar um modelo próprio, use **Novo projeto**. **Explorar um exemplo** abre o modelo de introdução à edição.
 
@@ -23,6 +23,7 @@ Para começar um modelo próprio, use **Novo projeto**. **Explorar um exemplo** 
 - Interface em português, ribbon, árvore de projeto, propriedades laterais, temas claro/escuro e painéis redimensionáveis.
 - Projetos com múltiplas seções; criação e duplicação de seções e materiais compartilhados.
 - Edição gráfica e por tabela: mover, inserir e excluir vértices, mover contornos, copiar e dividir regiões por uma reta.
+- Importação CSV do contorno do terreno ou de uma região, com prévia, escolha de colunas/unidade e confirmação em uma operação de histórico. DXF/DWG continuam fora deste incremento.
 - Interfaces coincidentes de solo acompanham a edição em uma única operação de desfazer/refazer, inclusive com subdivisões distintas nos contornos vizinhos.
 - Captura de vértices, interseções e segmentos; grade configurável (inicialmente 0,5 m), restrição horizontal/vertical, pan e zoom no cursor.
 - Entrada precisa por X/Z, deslocamento relativo ou distância/ângulo, além de medição de distância, desnível e ângulo.
@@ -34,12 +35,16 @@ Para começar um modelo próprio, use **Novo projeto**. **Explorar um exemplo** 
 - Alertas de cobertura e posição da água, faixas fora do terreno e sobreposição de cargas ativas; círculo geométrico de tentativa.
 - Casos de análise vinculados à seção, com hipóteses, direção explícita, métodos pretendidos, água, seleção de faixas e perfil numérico próprios, preservados ao salvar e reabrir.
 - Círculo fixo por coordenadas/desenho e limites/passos da busca circular; prévia das entradas, duplicação e exclusão com histórico.
+- **Análise → Calcular caso** prepara o círculo fixo e executa os métodos selecionados, ou inicia a busca circular, com estado visível, progresso e cancelamento.
+- Aba **Resultados** com superfície e fatia realçadas no desenho, parcelas do método selecionado, inspeções completas e distinção entre comparação no mesmo círculo e mínimos por método na malha.
 - Validação geométrica, diagnósticos, desfazer/refazer, proteção de propriedades em edição e de alterações não salvas.
 - Projeto `.geo.json` no formato `geostruct/5`, com leitura/migração dos arquivos das versões 1 a 4; cópia local de recuperação; importação inválida preserva o projeto aberto.
 - Relatório de dados de entrada com impressão/PDF pelo navegador, HTML portátil e exportação SVG da vista atual.
 - Estrutura desktop Tauri 2 com ícones padrão provisórios; a arte personalizada será incorporada em uma etapa posterior.
 
 O modelo e a edição usam unidades SI: **m, kN e kPa**, ângulos em graus na entrada. A edição aceita ponto ou vírgula decimal. Não há backend, login ou chamadas remotas durante o uso do aplicativo.
+
+Para importar coordenadas, selecione o terreno ou uma região e use **Importar CSV** nas propriedades. Escolha o arquivo, informe se há cabeçalho e sua unidade (m, cm ou mm), confira as colunas X/Z e a prévia em metros e confirme **Aplicar contorno**. O comando substitui somente o contorno selecionado e preserva seu ID e material, sem inferir vínculos com contornos vizinhos. Arquivos UTF-8 com BOM opcional, até 1 MiB e 500 pontos, aceitam separador `;`, vírgula ou tabulação e separador decimal explícito; vírgula não pode separar campos e decimais ao mesmo tempo. Os [exemplos CSV](examples/) são ilustrativos; veja o [passo a passo e as limitações](docs/GUIA-DE-USO.md#importar-coordenadas-csv). O projeto permanece no formato corrente, `geostruct/5`.
 
 ## Uso desktop
 
@@ -88,6 +93,12 @@ O [contrato de água e cargas](docs/AGUA-E-CARGAS.md) descreve as condições, o
 O [contrato de casos de análise](docs/CASOS-DE-ANALISE.md) descreve a associação à seção, as condições próprias dos cenários e o formato v5. O perfil de cada caso guarda separadamente geometria, Fellenius, Bishop e busca, inclusive campos ainda pendentes. Os perfis ilustrativos do projeto padrão também são salvos. Os dois métodos podem ser executados em círculo fixo ou na busca circular.
 
 Selecione um caso e abra **Entradas para o núcleo**, nas propriedades, para conferir os dados aplicados e suas pendências. O [contrato de entradas](docs/ENTRADAS-DO-NUCLEO.md) reúne condições efetivas, materiais usados, unidades e origem em uma cópia imutável, com revisão que detecta alterações posteriores.
+
+**Análise → Calcular caso** usa o modo, os métodos e o perfil numérico aplicados. A Ribbon informa se o caso está pronto, pendente, calculando, cancelado ou concluído, além de falhas de execução. Pendências abrem **Conferir modelo**; rascunhos permanecem disponíveis para aplicar, corrigir ou descartar. No círculo fixo, geometria, pesos, pressões, cargas e mecânica são preparados uma vez e compartilhados pelos métodos. As inspeções e os comandos individuais continuam disponíveis nas propriedades. Concluir a execução pode produzir diagnósticos sem FS admissível.
+
+Na aba **Resultados**, escolha **Método do resultado** e, na busca, **Superfície do resultado**. O desenho acompanha o círculo selecionado. Escolha **Fatia do resultado**, clique numa fatia desenhada ou use a tabela por teclado para consultar suas grandezas. **Inspeção completa** conserva as tabelas dos métodos e das preparações. A comparação exige a mesma superfície; os mínimos da malha são apresentados separadamente, com seus avisos de borda, descartes e validade.
+
+Resultados pertencem à sessão e são conservados por caso enquanto a entrada e o perfil efetivo continuam correspondentes. Ao voltar a um caso calculado, seu resultado válido reaparece. Rascunhos ou alterações relevantes mostram **Resultado desatualizado** e ocultam FS e desenho do resultado; descartar um rascunho sem mudar os dados aplicados permite consultar o resultado novamente. Alterar somente um perfil de método pode conservar preparações compatíveis nas propriedades. Abrir ou fechar um projeto limpa os resultados da sessão. O arquivo v5 conserva os dados e os perfis aplicados, sem resultados, seleção ou estado de execução.
 
 Em **Geometria do círculo fixo**, informe a tolerância em metros e use **Preparar fatias**. A prévia mostra cortes, arco e tabela de áreas/comprimentos, com refinamento angular de até 3°. Alterações nas entradas ocultam a geometria anterior. O [contrato geométrico](docs/GEOMETRIA-DO-CIRCULO.md) documenta interseções, faces verticais, cortes obrigatórios, limitações e casos analíticos. O perfil aplicado fica no caso e no arquivo v5; a prévia fica na sessão. A preparação é independente da avaliação pelos métodos.
 
