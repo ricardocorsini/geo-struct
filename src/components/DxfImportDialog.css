@@ -1,0 +1,196 @@
+.dxf-import {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  --dxf-error: #a64035;
+}
+[data-theme="dark"] .dxf-import {
+  --dxf-error: #f2a69e;
+}
+.dxf-import .field {
+  margin: 0;
+  min-width: 0;
+}
+.dxf-import .info-card,
+.dxf-import .form-error {
+  margin: 0;
+}
+.dxf-import .form-error {
+  color: var(--dxf-error);
+}
+.dxf-file-status {
+  margin: 6px 0 0;
+  overflow-wrap: anywhere;
+}
+.dxf-reference {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.dxf-reference-confirmation {
+  margin: 0;
+}
+.dxf-import .assignment-target {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+}
+.dxf-import .assignment-target input[type="checkbox"] {
+  width: 16px;
+  min-width: 16px;
+  flex: 0 0 16px;
+  margin: 0;
+}
+.dxf-filter {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) 2fr;
+  align-items: end;
+  gap: 12px;
+}
+.dxf-filter p {
+  margin: 0;
+  font-size: 12px;
+}
+.dxf-entity-list {
+  max-height: 310px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.dxf-entity {
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.dxf-entity + .dxf-entity {
+  border-top: 1px solid var(--border);
+}
+.dxf-entity-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  align-items: baseline;
+}
+.dxf-entity-heading h3 {
+  margin: 0;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.dxf-entity-heading span,
+.dxf-bounds {
+  color: var(--muted);
+  font-size: 11px;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.dxf-entity-error {
+  color: var(--dxf-error);
+  font-size: 12px;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.dxf-new-region {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.dxf-import select,
+.dxf-import input {
+  max-width: 100%;
+}
+.dxf-preview {
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--panel);
+}
+.dxf-preview svg {
+  display: block;
+  width: 100%;
+  max-height: 240px;
+}
+.dxf-preview polygon,
+.dxf-preview polyline {
+  vector-effect: non-scaling-stroke;
+  stroke-width: 1.5;
+}
+.dxf-current-domain {
+  fill: var(--hover);
+  stroke: var(--muted);
+  stroke-dasharray: 5 4;
+}
+.dxf-current-region {
+  fill: none;
+  stroke: var(--muted);
+  stroke-dasharray: 3 3;
+}
+.dxf-selected {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+}
+polyline.dxf-selected {
+  fill: none;
+}
+.dxf-preview[data-invalid="true"] .dxf-selected {
+  stroke: var(--dxf-error);
+}
+.dxf-preview figcaption {
+  padding: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.dxf-coordinate-wrap {
+  max-height: 220px;
+  overflow: auto;
+  border: 1px solid var(--border);
+}
+.dxf-coordinate-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.dxf-coordinate-table caption {
+  padding: 8px;
+  text-align: left;
+  font-weight: 600;
+}
+.dxf-coordinate-table th,
+.dxf-coordinate-table td {
+  padding: 7px 10px;
+  border-top: 1px solid var(--border);
+  text-align: right;
+}
+.dxf-coordinate-table th {
+  background: var(--panel);
+}
+.dxf-selection-summary h3 {
+  margin: 0;
+  font-size: 13px;
+}
+.dxf-selection-summary ul {
+  display: grid;
+  gap: 10px;
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+.dxf-selection-summary li {
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.dxf-selection-summary li span {
+  display: block;
+}
+.dxf-import .dialog-actions {
+  margin-top: 0;
+}
+@media (max-width: 650px) {
+  .dxf-reference,
+  .dxf-new-region,
+  .dxf-filter {
+    grid-template-columns: 1fr;
+  }
+}

@@ -10,6 +10,16 @@ Limites de modelagem: 100 seções e 100 materiais por projeto; 64 regiões e 10
 
 Inserir/excluir/mover vértices, mover contornos, copiar regiões e dividir uma região em duas por uma reta. Interfaces coincidentes acompanham a edição, com opção explícita de desvincular. Captura por vértices/interseções/segmentos, grade configurável, restrição horizontal/vertical, entrada absoluta/relativa/polar e medição. Faces verticais são aceitas na modelagem; seu tratamento físico depende do contrato futuro do motor. Divisões que gerariam ilhas, furos ou mais de duas partes são recusadas. Não há importação CAD nesta entrega.
 
+### Importação de coordenadas CSV — primeiro incremento da #9
+
+Importação do contorno completo do terreno ou de uma região existente, com cabeçalho, colunas X/Z e unidade m/cm/mm explícitos, prévia convertida em metros e confirmação em uma operação de histórico. Aceita UTF-8 com BOM opcional, campos entre aspas, separador `;`, vírgula ou tabulação e decimal escolhido, sem ambiguidade entre os separadores. Limites: 1 MiB e 500 pontos. A mesma validação da edição recusa contorno inválido, saída do domínio e sobreposição; erro ou cancelamento conserva o projeto. Não cria materiais, água, cargas ou casos e não infere vínculos geométricos. Integrado à base com perfil por caso, conserva o formato atual v5 e o solver. O CSV é o primeiro incremento; o suporte DXF está descrito a seguir.
+
+### Importação de polilinhas DXF — segundo incremento da #9
+
+Leitura textual de `LWPOLYLINE` e `POLYLINE` 2D retas no espaço de modelo, com camadas, entidades e diagnósticos antes da aplicação. Unidade m/cm/mm e origem são explícitas; a indicação `$INSUNITS` é informativa e não escolhe a unidade. A transformação é do plano XY do arquivo para X/Z do modelo, sem projeção geográfica. O lote pode substituir o terreno e regiões escolhidas ou acrescentar regiões, com material informado explicitamente. A validação conjunta conserva identidade dos contornos existentes, isolamento das seções, rascunhos e histórico em uma operação; cancelar ou falhar não altera o projeto.
+
+Limites: 2 MiB em UTF-8 com BOM opcional, 200 entidades, 500 pontos por polilinha e 250.000 pares código/valor, respeitando 64 regiões por seção e ±1.000.000 m após a conversão. Não há DWG, DXF binário, curvas/bulges, larguras, blocos, malhas/3D, OCS arbitrário, espaço de papel, importação de água/cargas/casos ou inferência de materiais. Entidades fora desse recorte ficam identificadas como incompatíveis. O formato permanece v5; nenhuma equação ou critério geotécnico muda. Veja o procedimento, os exemplos e as referências do formato no [guia de uso](GUIA-DE-USO.md#importar-polilinhas-dxf).
+
 ### Materiais e atribuição — implementado
 
 Cadastro Mohr–Coulomb com escolha explícita de parâmetros efetivos/totais, mensagens de limites e pendências por campo. Novas regiões e solos de fundo ficam sem atribuição até a escolha do usuário. Gerenciador com consulta de uso, duplicação e substituição ao excluir; atribuição em lote na seção ativa e histórico por operação. Introduzido no formato `geostruct/2`, preservado no formato atual v4. O peso específico permanece como um único valor total informado; nenhum parâmetro é deduzido de outro ou gerado a partir da água. O detalhamento está em [Materiais e formato](MATERIAIS-E-FORMATO.md).

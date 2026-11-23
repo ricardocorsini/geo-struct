@@ -1,4 +1,6 @@
 import { isTauri } from "@tauri-apps/api/core";
+import { MAX_CSV_BYTES } from "../domain/coordinate-csv";
+import { MAX_DXF_BYTES } from "../domain/coordinate-dxf";
 import {
   MAX_FILE_BYTES,
   parseProject,
@@ -8,6 +10,82 @@ import {
 } from "../domain/model";
 
 export const desktop = isTauri();
+export const MAX_CSV_FILE_BYTES = MAX_CSV_BYTES;
+export type CsvFile = { name: string; text: string };
+
+function checkCsvFile(name: string, size: number) {
+  if (!/\.csv$/i.test(name))
+    throw new Error("Escolha um arquivo com extensão .csv.");
+  if (size > MAX_CSV_FILE_BYTES)
+    throw new Error("O arquivo CSV excede o limite de 1 MiB.");
+}
+function decodeCsv(bytes: Uint8Array): string {
+  if (bytes.byteLength > MAX_CSV_FILE_BYTES)
+    throw new Error("O arquivo CSV excede o limite de 1 MiB.");
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch {
+    throw new Error("O arquivo CSV não contém texto UTF-8 válido.");
+  }
+}
+export async function readCsvFile(file: File): Promise<CsvFile> {
+  checkCsvFile(file.name, file.size);
+  return {
+    name: file.name,
+    text: decodeCsv(new Uint8Array(await file.arrayBuffer())),
+  };
+}
+export async function openNativeCsv(): Promise<CsvFile | null> {
+  const { open } = await import("@tauri-apps/plugin-dialog");
+  const { readFile, stat } = await import("@tauri-apps/plugin-fs");
+  const path = await open({
+    multiple: false,
+    directory: false,
+    filters: [{ name: "Coordenadas CSV", extensions: ["csv"] }],
+  });
+  if (!path) return null;
+  const name = path.split(/[\\/]/).at(-1)!;
+  checkCsvFile(name, (await stat(path)).size);
+  return { name, text: decodeCsv(await readFile(path)) };
+}
+export const MAX_DXF_FILE_BYTES = MAX_DXF_BYTES;
+export type DxfFile = { name: string; text: string };
+
+function checkDxfFile(name: string, size: number) {
+  if (!/\.dxf$/i.test(name))
+    throw new Error("Escolha um arquivo com extensão .dxf.");
+  if (size > MAX_DXF_FILE_BYTES)
+    throw new Error("O arquivo DXF excede o limite de 2 MiB.");
+}
+function decodeDxf(bytes: Uint8Array): string {
+  if (bytes.byteLength > MAX_DXF_FILE_BYTES)
+    throw new Error("O arquivo DXF excede o limite de 2 MiB.");
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch {
+    throw new Error("O arquivo DXF não contém texto UTF-8 válido.");
+  }
+}
+export async function readDxfFile(file: File): Promise<DxfFile> {
+  checkDxfFile(file.name, file.size);
+  return {
+    name: file.name,
+    text: decodeDxf(new Uint8Array(await file.arrayBuffer())),
+  };
+}
+export async function openNativeDxf(): Promise<DxfFile | null> {
+  const { open } = await import("@tauri-apps/plugin-dialog");
+  const { readFile, stat } = await import("@tauri-apps/plugin-fs");
+  const path = await open({
+    multiple: false,
+    directory: false,
+    filters: [{ name: "Contornos DXF", extensions: ["dxf"] }],
+  });
+  if (!path) return null;
+  const name = path.split(/[\\/]/).at(-1)!;
+  checkDxfFile(name, (await stat(path)).size);
+  return { name, text: decodeDxf(await readFile(path)) };
+}
 export const safeName = (s: string) =>
   s
     .replace(/[<>:"/\\|?*\x00-\x1f]/g, "-")

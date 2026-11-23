@@ -17,6 +17,57 @@ Também é possível digitar a tabela X/Z nas propriedades. **Colar lista de coo
 
 Clique em **Usar coordenadas**, confira a tabela e **Aplicar**. Os campos são um rascunho: sair deles para outro elemento oferece a opção de continuar editando ou descartar. O desenho não é modificado por um valor ainda não aplicado.
 
+### Importar coordenadas CSV
+
+Selecione **Terreno** ou uma região de solo na árvore e clique em **Importar CSV** nas propriedades. Aplique ou descarte antes qualquer alteração pendente dessas propriedades. A importação substitui a lista inteira de pontos do contorno selecionado; não acrescenta pontos à lista nem altera os contornos vizinhos por inferência de vínculos.
+
+1. Escolha um arquivo `.csv` em UTF-8, com BOM opcional. O limite é de 1 MiB (1.048.576 bytes), 64 colunas e 500 pontos. Não use separadores de milhares nos campos numéricos.
+2. Confira **Separador** e **Separador decimal**. O separador inicial é `;` e o decimal inicial é vírgula. Também há vírgula ou tabulação entre campos e ponto decimal. Não é permitido escolher vírgula nas duas funções; por exemplo, um CSV separado por vírgulas deve usar ponto decimal.
+3. Em **Primeira linha**, escolha explicitamente **Cabeçalho** ou **Coordenadas**. A opção não é deduzida do conteúdo. Se houver cabeçalho, ele identifica as opções de coluna e não vira um ponto.
+4. Informe a **Unidade do arquivo**: m, cm ou mm. Escolha as colunas **X** e **Z**; as outras colunas são ignoradas. Campos entre aspas podem conter o separador e aspas internas duplicadas, conforme CSV.
+5. Confira a **Prévia das coordenadas em metros**, a ordem dos pontos e os erros indicados. Só use **Aplicar contorno** quando a prévia estiver correta. A conversão afeta X e Z: 1.000 cm correspondem a 10 m; 1.000 mm correspondem a 1 m.
+
+O terreno exige ao menos dois pontos na ordem da esquerda para a direita e pode conter faces verticais. Uma região exige ao menos três pontos, contorno simples, área não nula e posição dentro da seção, sem sobreposição com outras regiões. Liste cada vértice uma vez, sem repetir o primeiro ao final: o editor fecha a região automaticamente. Valem as mesmas coordenadas-limite, base e validações da edição X/Z. A importação conserva a ordem dos pontos, sem arredondar pela grade, ajustar a escala automaticamente ou corrigir geometria inválida.
+
+**Aplicar contorno** confirma uma única operação de **Desfazer/Refazer**. A região conserva ID e material; outros elementos e seções permanecem iguais. O arquivo escolhido e as configurações de leitura não são gravados no projeto: somente as coordenadas confirmadas em metros entram no `.geo.json`, no formato atual v5. Erro de leitura ou de geometria conserva o projeto. Escolher outro arquivo invalida a prévia anterior; confira a nova leitura antes de aplicar.
+
+**Cancelar**, Escape ou **Fechar janela** descartam somente a importação ainda não aplicada. Enquanto o diálogo está aberto, a navegação e o fechamento continuam protegidos. Após aplicar, salve o projeto normalmente. CSV não importa materiais, água, cargas, casos de análise ou resultados. A leitura DXF usa o fluxo abaixo; DWG permanece fora do suporte.
+
+Exemplos próprios em `examples/`, sem dados de projeto real:
+
+| Arquivo                                                              | Configuração                                                     | Resultado                                        |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------ |
+| [terreno-coordenadas-m.csv](../examples/terreno-coordenadas-m.csv)   | `;`, vírgula decimal, cabeçalho, m, X = coluna 1 e Z = coluna 2  | (0; 12), (10; 12), (20; 8) m                     |
+| [terreno-coordenadas-cm.csv](../examples/terreno-coordenadas-cm.csv) | `;`, vírgula decimal, cabeçalho, cm, X = coluna 1 e Z = coluna 2 | Mesmo terreno, convertido de centímetros         |
+| [regiao-colunas-mm.csv](../examples/regiao-colunas-mm.csv)           | `;`, vírgula decimal, cabeçalho, mm, X = coluna 3 e Z = coluna 2 | Retângulo de 6 m × 4 m; coluna de nomes ignorada |
+
+### Importar polilinhas DXF
+
+Selecione a seção, o terreno ou uma região e use **Importar DXF** nas propriedades. Aplique ou descarte antes qualquer rascunho. Esta operação usa uma seção existente: sua base horizontal, materiais cadastrados e contornos não escolhidos continuam no projeto.
+
+1. Escolha um `.dxf` textual em UTF-8, com BOM opcional, até 2 MiB (2.097.152 bytes). O leitor limita a 200 entidades, 500 pontos por polilinha e 250.000 pares código/valor no arquivo. DXF binário e DWG não são lidos.
+2. Confira as camadas e a lista de entidades. **Camada DXF** filtra a lista para facilitar a escolha; não muda destinos já selecionados. Tipos incompatíveis e polilinhas inválidas mostram o motivo e não podem ser aplicados. O padrão de cada entidade é **Ignorar**.
+3. Escolha a **Unidade do DXF**: m, cm ou mm. A unidade declarada no cabeçalho, quando presente, é apenas uma informação para conferência; ela não seleciona a opção. Não suponha que um arquivo sem unidade esteja em metros.
+4. Confira o referencial **X DXF → X; Y DXF → Z**, com Z positivo para cima. **Origem X no DXF** e **Origem Y no DXF (Z)** são coordenadas do ponto que deve virar (0; 0) no modelo, expressas na unidade do arquivo. Os valores iniciais são zero e ficam visíveis. A conversão subtrai a origem antes de mudar a unidade: com origem (1.000; 2.000) cm, o ponto (2.000; 3.000) cm vira (10; 10) m. Não há reconhecimento automático de coordenadas geográficas, rotação, espelhamento ou projeção de planos 3D.
+5. Para uma polilinha aberta, escolha **Terreno**. O perfil precisa estar da esquerda para a direita; **Inverter ordem** é uma escolha explícita, sem mudar os valores dos pontos. Não use uma polilinha fechada como terreno.
+6. Para uma polilinha fechada, escolha uma região existente ou **Nova região**. A região existente conserva nome, ID e material. Para uma nova, informe nome e escolha o material cadastrado ou **Sem material — pendente**. A opção pendente é uma escolha explícita e continua aparecendo no diagnóstico do projeto; não significa solo de resistência nula. O material não é inferido pela camada, cor ou nome do DXF.
+7. Confira o lote, a imagem **Seção atual e contornos DXF selecionados** e a tabela **Coordenadas DXF convertidas em metros**. O seletor de entidade permite revisar cada lista. Confira também base, domínio, sobreposição e limites; terrenos e regiões são validados em conjunto, antes de qualquer mudança no projeto.
+8. Marque **Conferi unidades e referencial** somente após verificar a conversão. **Aplicar contornos** confirma todo o lote em uma operação de **Desfazer/Refazer**. Um erro bloqueia o lote inteiro. **Cancelar**, Escape ou **Fechar janela** mantêm o projeto aplicado e o histórico anteriores.
+
+O recorte suportado usa `LWPOLYLINE` e `POLYLINE` com seus `VERTEX`/`SEQEND`, compostas somente de segmentos retos, no espaço de modelo e plano XY. Elevação e espessura devem ser zero e a normal deve ser a padrão (0; 0; 1). Não são aproximados bulges/arcos, curvas ajustadas, splines, larguras, malhas/3D, blocos/`INSERT`, espaço de papel ou OCS arbitrário. Outros tipos ficam listados como incompatíveis. Um ponto final exatamente igual ao inicial pode ser retirado de uma região já marcada como fechada, pois o fechamento DXF já o representa; os demais vértices não são simplificados nem reparados por tolerância.
+
+A aplicação não altera o arquivo DXF, não cria materiais, água, cargas ou casos e não propaga vínculos de vértices antigos. Contornos não escolhidos e demais seções são preservados. Só as coordenadas e novas regiões confirmadas entram no `.geo.json`; a fonte DXF e as configurações de leitura ficam na sessão. Salve o projeto normalmente depois. O formato permanece `geostruct/5`, sem nova migração ou alteração de equações geotécnicas.
+
+Exemplos próprios pequenos, sem dados de clientes:
+
+| Arquivo                                                                  | Configuração                 | Resultado conferível                                                                                                |
+| ------------------------------------------------------------------------ | ---------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| [secao-polilinhas-m.dxf](../examples/secao-polilinhas-m.dxf)             | m, origem (0; 0)             | Terreno (0; 10), (10; 10), (20; 8); duas regiões retangulares separadas; um `ARC` incompatível na camada REFERENCIA |
+| [secao-origem-cm.dxf](../examples/secao-origem-cm.dxf)                   | cm, origem (1.000; 2.000) cm | Mesmo terreno e primeira região, a partir de coordenadas deslocadas                                                 |
+| [secao-curva-incompativel.dxf](../examples/secao-curva-incompativel.dxf) | Qualquer unidade             | `LWPOLYLINE` com bulge: diagnóstico, sem conversão em segmentos retos                                               |
+
+Para reproduzir o primeiro exemplo, use uma seção com base Z = 0 m e sem regiões sobrepostas aos novos retângulos. O exemplo não é um caso de validação de estabilidade. O contrato de grupos/flags segue as referências primárias de [`LWPOLYLINE`](https://help.autodesk.com/cloudhelp/2024/ENU/AutoCAD-DXF/files/GUID-748FC305-F3F2-4F74-825A-61F04D757A50.htm), [`POLYLINE`](https://help.autodesk.com/cloudhelp/2024/ENU/AutoCAD-DXF/files/GUID-ABF6B778-BE20-4B49-9B58-A94E64CEFFF3.htm) e [`VERTEX`](https://help.autodesk.com/cloudhelp/2024/ENU/AutoCAD-DXF/files/GUID-0741E831-599E-4CBF-91E1-8ADBCFD6556D.htm). Essas referências descrevem o arquivo; não validam parâmetros ou cálculos geotécnicos.
+
 ## Calcular o projeto padrão
 
 Na tela inicial ou em **Arquivo → Projeto**, escolha **Abrir projeto padrão**. A cópia é editável e já abre na aba **Análise**, no caso **Talude — busca circular**. Para trocar o projeto aberto, o aplicativo aplica a mesma proteção de rascunhos e alterações da abertura de arquivos.
@@ -96,7 +147,7 @@ Selecione o caso na árvore para ver sua prévia: condições de água/cargas, c
 
 **Abrir** valida a estrutura antes de substituir o projeto atual; arquivo inválido não remove o trabalho aberto. Salve ou descarte alterações do projeto antes de substituí-lo. A recuperação local registra somente as operações aplicadas e é oferecida na tela inicial; nunca abre automaticamente. Ela não substitui o arquivo exportado e não contém campos/traçados ainda em edição.
 
-O salvamento usa `geostruct/4`. Arquivos e recuperações das versões 1, 2 e 3 são migrados mantendo materiais, referências, coordenadas e IDs. A abertura do arquivo antigo informa a migração e pede salvamento para persistir o novo formato; **Salvar como** permite conservar o original. Versões antigas do aplicativo não abrem arquivos v4. Campos desconhecidos ou referências inexistentes são recusados, sem descarte silencioso. Ausência de água/cargas antiga fica não definida, sem pressupor condição seca ou sem cargas. Nenhum caso é criado a partir de arquivos antigos, e o círculo de tentativa continua preservado. Consulte [Casos de análise](CASOS-DE-ANALISE.md).
+O salvamento usa `geostruct/5`. Arquivos e recuperações das versões 1 a 4 são migrados mantendo materiais, referências, coordenadas e IDs. Casos da versão 4 recebem perfil de cálculo vazio, com a abertura geométrica de 3° já usada; os demais parâmetros precisam ser informados. A abertura do arquivo antigo informa a migração e pede salvamento para persistir o novo formato; **Salvar como** permite conservar o original. Versões antigas do aplicativo não abrem arquivos v5. Campos desconhecidos ou referências inexistentes são recusados, sem descarte silencioso. Ausência de água/cargas antiga fica não definida, sem pressupor condição seca ou sem cargas. Nenhum caso é criado a partir de arquivos antigos, e o círculo de tentativa continua preservado. Consulte [Casos de análise](CASOS-DE-ANALISE.md).
 
 **Fechar projeto** retorna à tela inicial, protegendo alterações. Fechar normalmente remove sua recuperação local. Fechar a janela/browser sem resolver alterações exibe a proteção da plataforma. Bloqueio de armazenamento local é comunicado; salvar arquivo continua disponível.
 

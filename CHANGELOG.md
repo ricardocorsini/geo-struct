@@ -2,6 +2,20 @@
 
 ## Em desenvolvimento
 
+### Importação DXF de contornos — segundo incremento da #9
+
+- Leitura de `LWPOLYLINE` e `POLYLINE` 2D retas no plano XY, com camadas, lista de entidades e diagnósticos para conteúdo inválido ou incompatível.
+- Unidade m/cm/mm e origem conferidas explicitamente, prévia convertida em metros e seleção de terreno, regiões existentes ou novas com atribuição de material explícita.
+- Aplicação do lote em uma operação de histórico, sem alterar seções vizinhas, arquivos de origem ou dados físicos além dos contornos escolhidos. Erro e cancelamento conservam o projeto.
+- Limites de 2 MiB, 200 entidades e 500 pontos por polilinha, exemplos próprios e contrato documentado. Preserva o formato `geostruct/5`; não introduz cálculos geotécnicos nem leitura DWG, curvas, blocos ou malhas 3D.
+
+### Importação CSV de contornos
+
+- Importação CSV para o terreno ou uma região, com prévia em metros, cabeçalho, colunas e unidade m/cm/mm explícitos.
+- Separadores configuráveis, campos entre aspas, limites de arquivo/pontos e validação de contorno, domínio e sobreposição antes da aplicação.
+- Substituição isolada em uma operação de histórico, preservando IDs, material, demais elementos e seções, com proteção de rascunhos e cancelamento sem alterar o projeto.
+- Exemplos próprios e testes de leitura/interface. A importação não altera o formato de projeto; integrada ao perfil por caso, conserva `geostruct/5`. A leitura DXF é o segundo incremento descrito acima; DWG permanece fora do suporte.
+
 ### Perfil de cálculo por caso
 
 - Formato `geostruct/5` com `numericalProfile` por caso. Geometria, Fellenius, Bishop e busca conservam suas configurações ao salvar, reabrir, alternar modos/métodos, duplicar e desfazer/refazer.

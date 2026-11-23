@@ -23,6 +23,8 @@ Para começar um modelo próprio, use **Novo projeto**. **Explorar um exemplo** 
 - Interface em português, ribbon, árvore de projeto, propriedades laterais, temas claro/escuro e painéis redimensionáveis.
 - Projetos com múltiplas seções; criação e duplicação de seções e materiais compartilhados.
 - Edição gráfica e por tabela: mover, inserir e excluir vértices, mover contornos, copiar e dividir regiões por uma reta.
+- Importação CSV do contorno do terreno ou de uma região, com prévia, escolha de colunas/unidade e confirmação em uma operação de histórico.
+- Importação de polilinhas DXF 2D retas, com camadas, destinos explícitos, conferência de unidade/origem e prévia do terreno e das regiões antes da aplicação em lote.
 - Interfaces coincidentes de solo acompanham a edição em uma única operação de desfazer/refazer, inclusive com subdivisões distintas nos contornos vizinhos.
 - Captura de vértices, interseções e segmentos; grade configurável (inicialmente 0,5 m), restrição horizontal/vertical, pan e zoom no cursor.
 - Entrada precisa por X/Z, deslocamento relativo ou distância/ângulo, além de medição de distância, desnível e ângulo.
@@ -40,6 +42,10 @@ Para começar um modelo próprio, use **Novo projeto**. **Explorar um exemplo** 
 - Estrutura desktop Tauri 2 com ícones padrão provisórios; a arte personalizada será incorporada em uma etapa posterior.
 
 O modelo e a edição usam unidades SI: **m, kN e kPa**, ângulos em graus na entrada. A edição aceita ponto ou vírgula decimal. Não há backend, login ou chamadas remotas durante o uso do aplicativo.
+
+Para importar coordenadas, selecione o terreno ou uma região e use **Importar CSV** nas propriedades. Escolha o arquivo, informe se há cabeçalho e sua unidade (m, cm ou mm), confira as colunas X/Z e a prévia em metros e confirme **Aplicar contorno**. O comando substitui somente o contorno selecionado e preserva seu ID e material, sem inferir vínculos com contornos vizinhos. Arquivos UTF-8 com BOM opcional, até 1 MiB e 500 pontos, aceitam separador `;`, vírgula ou tabulação e separador decimal explícito; vírgula não pode separar campos e decimais ao mesmo tempo. Os [exemplos CSV](examples/) são ilustrativos; veja o [passo a passo e as limitações](docs/GUIA-DE-USO.md#importar-coordenadas-csv). A importação conserva o formato atual `geostruct/5`.
+
+Em **Importar DXF**, escolha quais polilinhas representarão o terreno e os contornos de solo. Revise camadas, unidades m/cm/mm, a origem do arquivo e a prévia em metros antes de **Aplicar contornos**. O leitor aceita `LWPOLYLINE` e `POLYLINE` 2D de segmentos retos no plano XY; X do DXF vira X e Y vira Z, positivo para cima. Entidades incompatíveis aparecem com diagnóstico, sem aproximação automática de curvas. As regiões podem substituir contornos existentes ou criar novos com material escolhido explicitamente, inclusive **Sem material — pendente**. O arquivo e suas configurações não são incorporados ao projeto. Veja os [exemplos próprios](examples/) e o [contrato de leitura e aplicação](docs/GUIA-DE-USO.md#importar-polilinhas-dxf). DWG, curvas, blocos e geometrias 3D permanecem fora do suporte.
 
 ## Uso desktop
 

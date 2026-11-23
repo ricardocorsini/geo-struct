@@ -16,6 +16,8 @@ import {
   parseCoordinates,
   parseNumber,
 } from "../domain/geometry";
+import { CsvImportDialog } from "./CsvImportDialog";
+import { DxfImportDialog } from "./DxfImportDialog";
 
 const labels: Record<Selection["kind"], string> = {
   project: "Dados do projeto",
@@ -84,9 +86,11 @@ export function Inspector({
   const [paste, setPaste] = useState("");
   const [error, setError] = useState("");
   const [dirty, setDirty] = useState(false);
+  const [csvOpen, setCsvOpen] = useState(false);
+  const [dxfOpen, setDxfOpen] = useState(false);
   useEffect(() => {
-    onDirty(dirty);
-  }, [dirty, onDirty]);
+    onDirty(dirty || csvOpen || dxfOpen);
+  }, [dirty, csvOpen, dxfOpen, onDirty]);
   const change = (key: string, value: string) => {
     setValues((v) => ({ ...v, [key]: value }));
     setDirty(true);
@@ -310,6 +314,24 @@ export function Inspector({
       >
         <div className="inspector-fields">
           <h2>{labels[selection.kind]}</h2>
+          {["section", "terrain", "region"].includes(selection.kind) && (
+            <div>
+              <button
+                type="button"
+                className="secondary"
+                disabled={dirty || csvOpen}
+                onClick={() => setDxfOpen(true)}
+              >
+                Importar DXF
+              </button>
+              {dirty && (
+                <p className="hint">
+                  Aplique ou descarte as propriedades em edição antes de
+                  importar DXF.
+                </p>
+              )}
+            </div>
+          )}
           {["project", "section", "region", "material", "load"].includes(
             selection.kind,
           ) && field("name", "Nome")}
@@ -483,6 +505,25 @@ export function Inspector({
           )}
           {showCoordinates && (
             <>
+              {(selection.kind === "terrain" ||
+                selection.kind === "region") && (
+                <div>
+                  <button
+                    type="button"
+                    className="secondary"
+                    disabled={dirty}
+                    onClick={() => setCsvOpen(true)}
+                  >
+                    Importar CSV
+                  </button>
+                  {dirty && (
+                    <p className="hint">
+                      Aplique ou descarte as propriedades em edição antes de
+                      importar CSV.
+                    </p>
+                  )}
+                </div>
+              )}
               <div className="field-heading">
                 Coordenadas <span>m</span>
               </div>
@@ -599,6 +640,36 @@ export function Inspector({
           </button>
         </div>
       </form>
+      {csvOpen &&
+        (selection.kind === "terrain" || selection.kind === "region") && (
+          <CsvImportDialog
+            project={project}
+            section={section}
+            target={
+              selection.kind === "region"
+                ? { kind: "region", id: selection.id }
+                : { kind: "terrain" }
+            }
+            onClose={() => setCsvOpen(false)}
+            onApply={(next) => {
+              setCsvOpen(false);
+              onDirty(false);
+              onApply(next);
+            }}
+          />
+        )}
+      {dxfOpen && ["section", "terrain", "region"].includes(selection.kind) && (
+        <DxfImportDialog
+          project={project}
+          section={section}
+          onClose={() => setDxfOpen(false)}
+          onApply={(next) => {
+            setDxfOpen(false);
+            onDirty(false);
+            onApply(next);
+          }}
+        />
+      )}
     </aside>
   );
 }

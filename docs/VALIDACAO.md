@@ -10,6 +10,35 @@
 
 Os artefatos do CI incluem traces de falhas, sem capturas de imagens. Resultados de uma execução específica devem ser conferidos pelo SHA no GitHub Actions.
 
+### Importação CSV — primeiro incremento da #9 (19/11/2026)
+
+Validação local no Windows com Node 24.22.2, a partir da master `de00f77`, na branch `issue-9-importacao-csv`:
+
+- Instalação limpa: `npm ci --offline --cache ../npm-cache --maxsockets=1` concluída com o cache local, sem alterações de dependências.
+- `npm run check -- --maxWorkers=2`: **490 testes passaram**, incluindo 39 de interpretação/aplicação CSV e 16 de leitura web/adaptador nativo.
+- `npm run test:e2e -- --workers=2`: **93 testes passaram** no Chrome local via Playwright, incluindo sete cenários CSV e os fluxos anteriores.
+- `npm run build` e `npm run format:check`: aprovados. O build mantém avisos de tamanho do bundle e anotações da dependência Zod.
+
+Os casos CSV verificam unidades m/cm/mm, escolha de cabeçalho e colunas, separadores e aspas, limites e UTF-8 inválido, equivalência com X/Z manual, geometria inválida, isolamento de regiões/seções, cancelamento e histórico em uma operação. O fechamento cancelado preserva a prévia. Também foi conferida a janela mínima de 960 × 640 no tema claro e a janela de 1280 × 720 no tema escuro.
+
+Os testes do adaptador nativo usam mocks: não comprovam o seletor, as permissões ou o uso real no Tauri. Compilações desktop no CI e homologação nativa permanecem pendentes nesta entrega local. O formato permanece `geostruct/4`; cálculos e critérios geotécnicos não foram alterados. A importação DXF continua pendente na #9.
+
+### Importação DXF — segundo incremento da #9
+
+O segundo incremento usa a master `ca18fb8` (formato v5) e o CSV `ad14c3a` como base, na branch `issue-9-importacao-dxf`. O PR do CSV permanece separado. A incorporação local da master conserva ambas as contribuições e ajusta a expectativa de persistência CSV para v5; não é uma declaração de integração remota do CSV.
+
+O recorte de software é leitura textual estrita de `LWPOLYLINE`/`POLYLINE` 2D retas, conversão explícita de unidade/origem, diagnóstico por entidade e aplicação atômica de terreno e regiões. Os exemplos próprios em `examples/` têm coordenadas esperadas declaradas no [guia](GUIA-DE-USO.md#importar-polilinhas-dxf), sem resultados de estabilidade. Referências do formato e tolerâncias do editor não são referências de cálculo geotécnico.
+
+No Windows com Node 24.22.2, `npm run check -- --maxWorkers=2` passou com **634 testes em 25 arquivos**, incluindo 111 testes DXF novos: 86 de leitura/conversão, 16 de arquivos web/adaptador nativo e nove de aplicação conjunta. A instalação limpa reutilizou o cache local, sem alterar dependências. Os totais do CSV original de 19/11 permanecem identificados separadamente acima.
+
+Os **oito cenários DXF de navegador** passaram na verificação focal, incluindo a reexecução isolada do cenário de bulge/inversão após ajustar a asserção de uma opção nativa no teste. Os cenários cobrem lote de terreno e duas regiões, persistência v5 e perfis existentes, histórico único, unidades/origens explícitas, reconfirmação, filtro de camadas sem escolha implícita, materiais pendentes explícitos, substituição de região, sobreposição e destino duplicado, arquivos inválidos, cancelamento, bulge incompatível, inversão explícita e proteção de rascunho/fechamento.
+
+A suíte completa com dois workers terminou com **104 de 105 cenários aprovados** (7,5 min). O cenário de unidade cm atingiu o limite global de 30 s ao tentar abrir o importador: o trace registra cerca de 28,5 s na criação da página, antes de navegar e carregar o projeto. Sem alterar o produto ou aumentar o limite, esse cenário passou nas **três repetições isoladas** com um worker (5,5 s, 6,4 s e 6,7 s). Esse resultado não é apresentado como uma execução completa sem falhas. `npm run build`, `npm run format:check` e `git diff --check` passaram; permanecem os avisos de tamanho do bundle e anotações da dependência Zod.
+
+A prévia com terreno e duas regiões foi conferida em 960 × 640 no tema claro e 1280 × 720 no tema escuro. Opções, resumo do lote, desenho, coordenadas e botões ficaram legíveis com rolagem. Não houve erro JavaScript de página; a primeira visita registrou o 404 preexistente de `/favicon.ico`. As capturas e o relatório dessa conferência ficam fora dos arquivos versionados.
+
+Testes de adaptadores nativos usam mocks; compilação, abertura manual no Tauri e uso real dos seletores/permissões são evidências separadas. A leitura DXF conserva o formato `geostruct/5` e não altera as equações do motor.
+
 ### Evolução da geometria e edição
 
 Testes adicionais verificam interfaces com subdivisões diferentes, conservação de área e ausência de sobreposição após editar/dividir, limites de pontos, identidades/materiais, cópia inválida, precisão/captura e faces verticais. O arquivo de exemplo da primeira versão é lido e regravado sem alterar seus dados. Os fluxos de interface cobrem edição compartilhada e histórico, inserção/exclusão gráfica, divisão com persistência, rejeição de cópia, deslocamento relativo, medição sem modificar o modelo e entrada de face vertical na janela mínima.
