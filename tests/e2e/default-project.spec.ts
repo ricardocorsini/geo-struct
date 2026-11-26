@@ -58,7 +58,7 @@ test("abre o padrão e calcula a busca e o círculo fixo sem digitar os perfis",
   );
 
   const project = await save(page);
-  expect(project.version).toBe(5);
+  expect(project.version).toBe(6);
   expect(project.analysisCases.map((c) => c.surfaceMode)).toEqual([
     "search",
     "fixed",

@@ -1637,3 +1637,94 @@ kbd {
   cursor: pointer;
   font-weight: 600;
 }
+
+.case-water-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.scenario-comparison {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.comparison-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.comparison-checks,
+.comparison-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.comparison-warnings {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.batch-status {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  white-space: nowrap;
+}
+
+.batch-status.status-current {
+  border-color: #4f7b57;
+  color: #3a6041;
+  background: #edf5ee;
+}
+
+.batch-status.status-outdated,
+.batch-status.status-blocked,
+.batch-status.status-cancelled {
+  border-color: #b4782e;
+  color: #845218;
+  background: #fcf4e8;
+}
+
+.batch-status.status-failed {
+  border-color: #b34848;
+  color: #8b2e2e;
+  background: #fbeeed;
+}
+
+.batch-status.status-running,
+.batch-status.status-queued {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+:root[data-theme="dark"] .batch-status.status-current {
+  color: #a8d5af;
+  background: #1f3323;
+}
+
+:root[data-theme="dark"] .batch-status.status-outdated,
+:root[data-theme="dark"] .batch-status.status-blocked,
+:root[data-theme="dark"] .batch-status.status-cancelled {
+  color: #f0c285;
+  background: #3a2b17;
+}
+
+:root[data-theme="dark"] .batch-status.status-failed {
+  color: #f3a6a6;
+  background: #3b1e1e;
+}

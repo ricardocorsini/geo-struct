@@ -95,6 +95,12 @@ const searchAxis = z
       .nullable(),
   })
   .strict();
+const waterUnitWeightSchema = z
+  .number()
+  .finite()
+  .positive("O peso específico da água deve ser maior que zero.")
+  .max(100, "O limite de cadastro do peso específico da água é 100 kN/m³.")
+  .nullable();
 export const analysisCaseSchema = z
   .object({
     id,
@@ -125,7 +131,11 @@ export const analysisCaseSchema = z
         }),
       })
       .strict(),
-    waterCondition: z.enum(["section", "dry", "piezometric"]).nullable(),
+    waterCondition: z
+      .enum(["section", "dry", "piezometric", "case-piezometric"])
+      .nullable(),
+    water: points.nullable(),
+    waterUnitWeight: waterUnitWeightSchema,
     waterSource: z.string().max(2000),
     loadCondition: z.enum(["section", "none", "selected"]).nullable(),
     loadIds: z
@@ -193,12 +203,7 @@ const sectionSchema = z
     regions: z.array(regionSchema).max(64),
     water: points.nullable(),
     waterMode: z.enum(["unspecified", "dry", "piezometric"]),
-    waterUnitWeight: z
-      .number()
-      .finite()
-      .positive("O peso específico da água deve ser maior que zero.")
-      .max(100, "O limite de cadastro do peso específico da água é 100 kN/m³.")
-      .nullable(),
+    waterUnitWeight: waterUnitWeightSchema,
     waterSource: z.string().max(2000),
     loadCondition: z.enum(["unspecified", "none", "loads"]),
     loads: z.array(loadSchema).max(100),
@@ -215,7 +220,7 @@ const sectionSchema = z
 const projectFields = z
   .object({
     format: z.literal("geostruct"),
-    version: z.literal(5),
+    version: z.literal(6),
     id,
     name,
     author: z.string().max(200),
@@ -288,10 +293,20 @@ function checkReferences(
   }
 }
 export const projectSchema = projectFields.superRefine(checkReferences);
-const v4Fields = projectFields.extend({
+const v5AnalysisCaseSchema = analysisCaseSchema
+  .omit({ water: true, waterUnitWeight: true })
+  .extend({
+    waterCondition: z.enum(["section", "dry", "piezometric"]).nullable(),
+  });
+const v5Fields = projectFields.extend({
+  version: z.literal(5),
+  analysisCases: z.array(v5AnalysisCaseSchema).max(100),
+});
+const v5ProjectSchema = v5Fields.superRefine(checkReferences);
+const v4Fields = v5Fields.extend({
   version: z.literal(4),
   analysisCases: z
-    .array(analysisCaseSchema.omit({ numericalProfile: true }))
+    .array(v5AnalysisCaseSchema.omit({ numericalProfile: true }))
     .max(100),
 });
 const v4ProjectSchema = v4Fields.superRefine(checkReferences);
@@ -345,6 +360,7 @@ export type Tool =
   | "terrain"
   | "region"
   | "water"
+  | "case-water"
   | "load"
   | "circle"
   | "case-circle"
@@ -385,7 +401,7 @@ export function newProject(projectName: string, author = ""): Project {
   m.name = "Solo 1";
   return {
     format: "geostruct",
-    version: 5,
+    version: 6,
     id: uid(),
     name: projectName,
     author,
@@ -507,7 +523,9 @@ export function readProject(text: string): {
           ? v3ProjectSchema
           : version === 4
             ? v4ProjectSchema
-            : projectSchema
+            : version === 5
+              ? v5ProjectSchema
+              : projectSchema
   ).safeParse(value);
   if (!r.success)
     throw new Error(
@@ -518,28 +536,43 @@ export function readProject(text: string): {
           .join(" · "),
     );
   const data = r.data;
-  if (data.version === 5) return { project: data, migrated: false };
+  if (data.version === 6) return { project: data, migrated: false };
+  if (data.version === 5)
+    return {
+      project: projectSchema.parse({
+        ...data,
+        version: 6,
+        analysisCases: data.analysisCases.map((c) => ({
+          ...c,
+          water: null,
+          waterUnitWeight: null,
+        })),
+      }),
+      migrated: true,
+    };
   if (data.version === 4)
     return {
       project: projectSchema.parse({
         ...data,
-        version: 5,
+        version: 6,
         analysisCases: data.analysisCases.map((c) => ({
           ...c,
           numericalProfile: emptyNumericalProfile(),
+          water: null,
+          waterUnitWeight: null,
         })),
       }),
       migrated: true,
     };
   if (data.version === 3)
     return {
-      project: projectSchema.parse({ ...data, version: 5, analysisCases: [] }),
+      project: projectSchema.parse({ ...data, version: 6, analysisCases: [] }),
       migrated: true,
     };
   return {
     project: projectSchema.parse({
       ...data,
-      version: 5,
+      version: 6,
       analysisCases: [],
       sections: data.sections.map((s) => ({
         ...s,

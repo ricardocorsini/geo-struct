@@ -1,6 +1,6 @@
-# Casos de análise e formato v5
+# Casos de análise e formato v6
 
-Um caso prepara as entradas de uma análise na geometria de uma seção. Cada caso tem ID próprio; geometria, materiais, linha piezométrica e dados das faixas continuam no cadastro da seção. Mudar esses dados afeta os casos vinculados. A versão em desenvolvimento permite preparar a [geometria das fatias de um círculo fixo](GEOMETRIA-DO-CIRCULO.md), sem gravá-la no arquivo. Fellenius e Bishop também podem avaliar os círculos da [busca circular](BUSCA-CIRCULAR.md). O perfil numérico aplicado pertence ao caso e é salvo no arquivo. Resultados dos cálculos e prévias ficam na sessão.
+Um caso prepara as entradas de uma análise na geometria de uma seção. Cada caso tem ID próprio; geometria, materiais e dados das faixas continuam no cadastro da seção, e cada caso pode herdar a condição de água da seção ou cadastrar sua própria linha piezométrica (`case-piezometric`). Mudar os dados compartilhados da seção afeta os casos vinculados; editar a água própria de um caso conserva os dados e a revisão dos demais. A versão em desenvolvimento permite preparar a [geometria das fatias de um círculo fixo](GEOMETRIA-DO-CIRCULO.md), sem gravá-la no arquivo. Fellenius e Bishop também podem avaliar os círculos da [busca circular](BUSCA-CIRCULAR.md), bem como executar e comparar cenários selecionados em lote. O perfil numérico aplicado pertence ao caso e é salvo no arquivo. Resultados dos cálculos e prévias ficam na sessão.
 
 ## Contrato
 
@@ -16,7 +16,9 @@ Um caso prepara as entradas de uma análise na geometria de uma seção. Cada ca
 | `numericalProfile`        | Configurações numéricas de geometria, Fellenius, Bishop e busca; campos numéricos ou nulos enquanto pendentes                      |
 | `fixedCircle`             | Centro `x`, `y` (Z) em m e `radius` em m; cada valor pode ser nulo enquanto pendente                                               |
 | `search`                  | Eixos `x`, `y` (Z) e `radius`, cada um com `min`, `max` e `step` em m, inicialmente nulos                                          |
-| `waterCondition`          | Nulo, `section`, `dry` ou `piezometric`                                                                                            |
+| `waterCondition`          | Nulo, `section`, `dry`, `piezometric` (linha da seção) ou `case-piezometric` (linha própria do caso)                               |
+| `water`                   | Polilinha piezométrica própria do caso (pontos X/Z em m) ou nulo                                                                   |
+| `waterUnitWeight`         | Peso específico da água γw próprio do caso em kN/m³ (positivo até 100) ou nulo                                                     |
 | `waterSource`             | Origem/justificativa da hipótese própria de água, até 2.000 caracteres                                                             |
 | `loadCondition`           | Nulo, `section`, `none` ou `selected`                                                                                              |
 | `loadIds`                 | IDs distintos de até 100 faixas da mesma seção, preservados também quando a seleção estiver inativa                                |
@@ -48,20 +50,21 @@ Edições válidas do perfil entram no projeto e no histórico. Texto numérico 
 
 ## Resolução das condições
 
-| Escolha no caso    | Entradas usadas na prévia e conferência                                                                      |
-| ------------------ | ------------------------------------------------------------------------------------------------------------ |
-| Água `section`     | Condição, linha, γw e origem atuais da seção                                                                 |
-| Água `dry`         | Hipótese seca e origem informada no caso; linha/γw da seção permanecem guardados                             |
-| Água `piezometric` | Linha e γw cadastrados na seção, com origem da hipótese própria do caso; a linha pode estar inativa na seção |
-| Água nula          | Não definida, sem pressupor condição seca                                                                    |
-| Cargas `section`   | Condição atual da seção e habilitação individual de suas faixas                                              |
-| Cargas `none`      | Nenhuma faixa ativa no caso, mantendo os IDs guardados                                                       |
-| Cargas `selected`  | Somente as faixas em `loadIds`, independentemente da habilitação ou condição de cargas na seção              |
-| Cargas nula        | Não definidas, sem pressupor ausência de carga                                                               |
+| Escolha no caso         | Entradas usadas na prévia e conferência                                                                      |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Água `section`          | Condição, linha, γw e origem atuais da seção                                                                 |
+| Água `dry`              | Hipótese seca e origem informada no caso; linha/γw da seção permanecem guardados                             |
+| Água `piezometric`      | Linha e γw cadastrados na seção, com origem da hipótese própria do caso; a linha pode estar inativa na seção |
+| Água `case-piezometric` | Linha piezométrica, γw e origem próprios do caso; preserva os dados da seção e dos demais casos              |
+| Água nula               | Não definida, sem pressupor condição seca                                                                    |
+| Cargas `section`        | Condição atual da seção e habilitação individual de suas faixas                                              |
+| Cargas `none`           | Nenhuma faixa ativa no caso, mantendo os IDs guardados                                                       |
+| Cargas `selected`       | Somente as faixas em `loadIds`, independentemente da habilitação ou condição de cargas na seção              |
+| Cargas nula             | Não definidas, sem pressupor ausência de carga                                                               |
 
-A resolução cria uma cópia em memória, sem alterar o cadastro. Dados de cada faixa são compartilhados: nome, intervalo, q e origem continuam na seção. Uma seleção explícita vazia é pendência, não é convertida para `none`. A origem própria de água permanece guardada quando se escolhe herdar a condição da seção. Uma hipótese piezométrica exige linha e γw; a seca exige justificativa. A conferência reutiliza os diagnósticos de água/cargas com destino ao caso correspondente.
+A resolução cria uma cópia em memória, sem alterar o cadastro. Dados de cada faixa são compartilhados: nome, intervalo, q e origem continuam na seção. Uma seleção explícita vazia é pendência, não é convertida para `none`. A origem própria de água e a polilinha/γw do caso permanecem guardadas quando se escolhe outra condição de água. Uma hipótese piezométrica exige linha e γw; a seca exige justificativa. A conferência reutiliza os diagnósticos de água/cargas com destino ao caso correspondente.
 
-O modelo ainda contém uma única linha piezométrica e um cadastro de faixas por seção. Linhas alternativas ou intensidades diferentes podem ser representadas em outra seção duplicada; séries temporais, combinações com fatores, variações de material e estágios construtivos não fazem parte deste recorte.
+Na janela **Gerenciar casos / Comparar cenários**, os casos da mesma seção podem ser selecionados para cálculo em lote (círculo fixo ou busca circular via Worker) e comparados lado a lado quanto às hipóteses efetivas de água e origem, cargas, direção, métodos, FS, superfícies, avisos e estado (`Atualizado`, `Desatualizado`, `Calculando`, `Na fila`, `Incompleto / bloqueado`, `Falhou` ou `Cancelado`). Falhas ou cancelamentos isolam o caso afetado sem apagar resultados já concluídos.
 
 ## Edição e integridade
 
@@ -78,8 +81,8 @@ A prévia de caso permite navegar e inspecionar suas entradas; editar a geometri
 
 ## Migração
 
-O formato atual é `geostruct/5`. O leitor valida cada arquivo v1 a v4 pelo contrato declarado antes de migrar. Em v4, os casos existentes recebem `numericalProfile` vazio e `version: 5`. A abertura angular recebe os 3° já usados na preparação; os demais parâmetros ficam nulos e aparecem como pendências. Perfis numéricos que existiam apenas na sessão de uma versão anterior precisam ser preenchidos novamente.
+O formato atual é `geostruct/6`. O leitor valida cada arquivo v1 a v5 pelo contrato declarado antes de migrar. Em v5, os casos existentes preservam integralmente `waterCondition` (inclusive herança `"section"`), `waterSource` e `numericalProfile`, recebendo `water: null`, `waterUnitWeight: null` e `version: 6`. Em v4, os casos existentes recebem ainda `numericalProfile` vazio. A abertura angular recebe os 3° já usados na preparação; os demais parâmetros ficam nulos e aparecem como pendências. Perfis numéricos que existiam apenas na sessão de uma versão anterior precisam ser preenchidos novamente.
 
-Arquivos v3 recebem `analysisCases: []` e `version: 5`, conservando os demais campos, inclusive nulos, zeros, linhas/faixas inativas e círculo de tentativa. Arquivos v1/v2 recebem também os campos de água/cargas descritos em [Água e cargas](AGUA-E-CARGAS.md), sem pressupor hipóteses ausentes.
+Arquivos v3 recebem `analysisCases: []` e `version: 6`, conservando os demais campos, inclusive nulos, zeros, linhas/faixas inativas e círculo de tentativa. Arquivos v1/v2 recebem também os campos de água/cargas descritos em [Água e cargas](AGUA-E-CARGAS.md), sem pressupor hipóteses ausentes.
 
-Não se deduz direção, método ou cenário de um círculo antigo. IDs, materiais e geometria são preservados. Campos desconhecidos, referências inexistentes ou cruzadas entre seções e IDs duplicados são recusados. A recuperação local mantém a mesma chave e usa esse leitor. A abertura comunica a migração e marca o projeto para salvar; Salvar como conserva o original. Versões anteriores do aplicativo não leem v5.
+Não se deduz direção, método ou cenário de um círculo antigo. IDs, materiais e geometria são preservados. Campos desconhecidos, referências inexistentes ou cruzadas entre seções e IDs duplicados são recusados. A recuperação local mantém a mesma chave e usa esse leitor. A abertura comunica a migração e marca o projeto para salvar; Salvar como conserva o original. Versões anteriores do aplicativo não leem v6.

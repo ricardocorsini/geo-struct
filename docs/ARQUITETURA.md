@@ -2,21 +2,21 @@
 
 React, TypeScript e Vite compõem a interface. Tauri 2 fornece a janela nativa para Linux/Windows. Os arquivos, a tipografia, os ícones e o processamento são locais. Não existe backend remoto, conta ou telemetria do produto.
 
-| Camada                           | Responsabilidade                                                                              |
-| -------------------------------- | --------------------------------------------------------------------------------------------- |
-| `src/domain/model.ts`            | Contrato `geostruct/5`, migração de v1 a v4, perfis numéricos por caso e validação estrutural |
-| `src/domain/materials.ts`        | Pendências, consulta de uso, criação/duplicação, atribuição e substituição de materiais       |
-| `src/domain/analysis.ts`         | Casos, condições resolvidas para prévia/conferência, referências e operações por seção        |
-| `src/domain/conditions.ts`       | Condições de água/cargas, seleção de dados ativos e operações imutáveis de sobrecarga         |
-| `src/domain/geometry.ts`         | Contornos, interpolação, sobreposição, cobertura e diagnósticos do editor                     |
-| `src/domain/editing.ts`          | Operações imutáveis de vértices/contornos, interfaces coincidentes, divisão e cópia           |
-| `src/domain/precision.ts`        | Captura, entrada absoluta/relativa/polar e medição, sem dependência de tela                   |
-| `src/domain/history.ts`          | Histórico imutável, limitado a 50 transações                                                  |
-| `src/components/ModelCanvas.tsx` | Vista SVG, coordenadas de tela, pan/zoom, captura e prévias de desenho                        |
-| `src/components/Inspector.tsx`   | Rascunhos de campos e aplicação transacional                                                  |
-| `src/App.tsx`                    | Projeto ativo, seleção, comandos, histórico e proteções de navegação                          |
-| `src/lib/files.ts`               | Adaptadores web/desktop, serialização, exportação e recuperação                               |
-| `src-tauri`                      | Identidade nativa, diálogos, permissões e empacotamento                                       |
+| Camada                           | Responsabilidade                                                                                    |
+| -------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `src/domain/model.ts`            | Contrato `geostruct/6`, migração de v1 a v5, perfis numéricos, água por caso e validação estrutural |
+| `src/domain/materials.ts`        | Pendências, consulta de uso, criação/duplicação, atribuição e substituição de materiais             |
+| `src/domain/analysis.ts`         | Casos, condições resolvidas para prévia/conferência, referências e operações por seção              |
+| `src/domain/conditions.ts`       | Condições de água/cargas, seleção de dados ativos e operações imutáveis de sobrecarga               |
+| `src/domain/geometry.ts`         | Contornos, interpolação, sobreposição, cobertura e diagnósticos do editor                           |
+| `src/domain/editing.ts`          | Operações imutáveis de vértices/contornos, interfaces coincidentes, divisão e cópia                 |
+| `src/domain/precision.ts`        | Captura, entrada absoluta/relativa/polar e medição, sem dependência de tela                         |
+| `src/domain/history.ts`          | Histórico imutável, limitado a 50 transações                                                        |
+| `src/components/ModelCanvas.tsx` | Vista SVG, coordenadas de tela, pan/zoom, captura e prévias de desenho                              |
+| `src/components/Inspector.tsx`   | Rascunhos de campos e aplicação transacional                                                        |
+| `src/App.tsx`                    | Projeto ativo, seleção, comandos, histórico e proteções de navegação                                |
+| `src/lib/files.ts`               | Adaptadores web/desktop, serialização, exportação e recuperação                                     |
+| `src-tauri`                      | Identidade nativa, diálogos, permissões e empacotamento                                             |
 
 O modelo usa coordenadas cartesianas X e Z, com Z positivo para cima. O campo JSON `y` armazena a coordenada vertical Z. Comprimentos em m, tensões em kPa e pesos específicos em kN/m³. Zoom e pan pertencem à vista, nunca alteram o modelo.
 
@@ -24,7 +24,7 @@ Cada seção possui um terreno e uma base horizontal; o domínio é fechado auto
 
 O terreno admite X não decrescente e faces verticais, sem retorno sobre segmentos nem prolongamentos sem área nas extremidades. A base continua horizontal e perfis em balanço não são admitidos. A linha piezométrica mantém X estritamente crescente. Na abscissa de uma face vertical, o desenho de cargas usa o envelope superior e o diagnóstico de água acima do terreno usa o inferior. Essas convenções servem ao editor, não definem forças ou admissibilidade do futuro solver. A tolerância geométrica do editor é `1e-7 m`; não determina convergência, admissibilidade ou tolerância do futuro cálculo.
 
-Os contornos continuam armazenados como listas de pontos. O formato atual é `geostruct/5`: acrescenta `numericalProfile` a cada caso e conserva identidades, vínculos à seção, pendências de materiais e condições de água/cargas dos formatos anteriores. A leitura valida v1 a v4 em seus contratos antes de migrar; preserva valores, coordenadas e IDs e não interpreta ausência de lançamento como condição seca ou sem cargas. Casos de v4 recebem perfil vazio, com a abertura angular de 3° já usada e os demais parâmetros nulos. Campos desconhecidos e perfis com números inválidos são recusados. A interface comunica a migração e marca o projeto para salvar; aplicativos antigos não leem v5. Use Salvar como para manter o original. A recuperação local antiga passa pela mesma leitura. Grade, restrição ortogonal e vinculação de interfaces são opções da sessão, não parâmetros físicos serializados.
+Os contornos continuam armazenados como listas de pontos. O formato atual é `geostruct/6`: acrescenta `water` e `waterUnitWeight` opcionais por caso (além da opção `case-piezometric` em `waterCondition`) mantendo o `numericalProfile` de v5 e conservando identidades, vínculos à seção, pendências de materiais e condições de água/cargas dos formatos anteriores. A leitura valida v1 a v5 em seus contratos antes de migrar; preserva valores, coordenadas, herança de água e IDs e não interpreta ausência de lançamento como condição seca ou sem cargas. Casos de v5 recebem `water: null` e `waterUnitWeight: null`; casos de v4 recebem também perfil vazio, com a abertura angular de 3° já usada e os demais parâmetros nulos. Campos desconhecidos e perfis com números inválidos são recusados. A interface comunica a migração e marca o projeto para salvar; aplicativos antigos não leem v6. Use Salvar como para manter o original. A recuperação local antiga passa pela mesma leitura. Grade, restrição ortogonal e vinculação de interfaces são opções da sessão, não parâmetros físicos serializados.
 
 `conditions.ts` centraliza quais lançamentos estão ativos. Desenho, captura e diagnósticos geométricos usam somente a água piezométrica e as faixas habilitadas na condição de cargas. Dados guardados continuam no cadastro e relatório, com identificação de inatividade. Trocas no gerenciador são transações imediatas; propriedades usam rascunho/Aplicar. Duplicar carga cria ID próprio e cópia desabilitada. Reativação que introduza erro geométrico é recusada e apresentada no formulário. `introducedError` distingue os diagnósticos por seção, destino e mensagem. Veja [Água e cargas](AGUA-E-CARGAS.md).
 

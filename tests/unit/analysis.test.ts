@@ -303,7 +303,7 @@ describe("Conferência das entradas de casos", () => {
     expect(projectSchema.safeParse(p).success).toBe(false);
   });
 });
-describe("Migração para v5", () => {
+describe("Migração para v6", () => {
   const legacy = () =>
     JSON.parse(
       readFileSync(
@@ -319,7 +319,7 @@ describe("Migração para v5", () => {
       old.sections[0].circle = { x: 10, y: 20, radius: 5 };
       const { project, migrated } = readProject(JSON.stringify(old));
       expect(migrated).toBe(true);
-      expect(project).toMatchObject({ ...old, version: 5, analysisCases: [] });
+      expect(project).toMatchObject({ ...old, version: 6, analysisCases: [] });
     },
   );
   it("v3 preserva integralmente dados, inativos e pendências, acrescentando lista vazia", () => {
@@ -330,11 +330,26 @@ describe("Migração para v5", () => {
     const old = { ...data, version: 3 };
     const result = readProject(JSON.stringify(old));
     expect(result).toEqual({
-      project: { ...old, version: 5, analysisCases: [] },
+      project: { ...old, version: 6, analysisCases: [] },
       migrated: true,
     });
   });
-  it("v5 não descarta campo desconhecido de caso nem aceita referência ausente", () => {
+  it("v5 preserva casos, perfil numérico e água herdada, acrescentando campos opcionais nulos", () => {
+    const { p, c } = fixture();
+    const { water, waterUnitWeight, ...v5Case } = c;
+    const old = { ...p, version: 5, analysisCases: [v5Case] };
+    const result = readProject(JSON.stringify(old));
+    expect(result).toEqual({
+      project: {
+        ...old,
+        version: 6,
+        analysisCases: [{ ...v5Case, water: null, waterUnitWeight: null }],
+      },
+      migrated: true,
+    });
+    expect(result.project.analysisCases[0].waterCondition).toBe("section");
+  });
+  it("v6 não descarta campo desconhecido de caso nem aceita referência ausente", () => {
     const { p, c } = fixture();
     const data = JSON.parse(serializeProject(p));
     data.analysisCases[0].solverResult = 1.5;

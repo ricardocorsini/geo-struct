@@ -92,6 +92,8 @@ import { Report } from "./components/Report";
 import { Materials, MaterialAssignment } from "./components/Materials";
 import { prepareCoreInput } from "./domain/core-input";
 import { defaultProject } from "./domain/default-project";
+import type { CaseRunRecord } from "./domain/case-comparison";
+import { runCasesBatch, type BatchExecutionHandle } from "./lib/batch-cases";
 import type { FixedCirclePreparation } from "./core/fixed-circle";
 import type { GeometryFields } from "./components/FixedCirclePreview";
 import type { SearchOverlay } from "./components/CircularSearchPanel";
@@ -153,6 +155,9 @@ export default function App() {
   const [searchOverlay, setSearchOverlay] = useState<SearchOverlay | null>(
     null,
   );
+  const [caseRuns, setCaseRuns] = useState<Record<string, CaseRunRecord>>({});
+  const [batchRunning, setBatchRunning] = useState(false);
+  const batchHandle = useRef<BatchExecutionHandle | null>(null);
   const [notice, setNotice] = useState(""),
     [question, setQuestion] = useState<Question | null>(null),
     [dialog, setDialog] = useState<
@@ -367,12 +372,38 @@ export default function App() {
       dispose?.();
     };
   }, [notify]);
+  useEffect(() => () => batchHandle.current?.cancel(), []);
+  const stopBatch = useCallback(() => {
+    batchHandle.current?.cancel();
+    batchHandle.current = null;
+    setBatchRunning(false);
+  }, []);
+  const startBatch = useCallback(
+    (caseIds: string[]) => {
+      if (!project || !caseIds.length) return;
+      batchHandle.current?.cancel();
+      setBatchRunning(true);
+      batchHandle.current = runCasesBatch({
+        project,
+        caseIds,
+        onUpdate: (caseId, record) =>
+          setCaseRuns((prev) => ({ ...prev, [caseId]: record })),
+        onComplete: () => {
+          batchHandle.current = null;
+          setBatchRunning(false);
+        },
+      });
+    },
+    [project],
+  );
   const openProject = (
     p: Project,
     path: string | null,
     savedState: boolean,
     migrated = false,
   ) => {
+    stopBatch();
+    setCaseRuns({});
     setH(history(p));
     setGeometryDraft(null);
     setSectionId(p.sections[0].id);
@@ -390,7 +421,7 @@ export default function App() {
     setDialog(null);
     if (migrated)
       notify(
-        "Projeto de versão anterior aberto com os dados preservados. O próximo salvamento usará a versão 5; use Salvar como para conservar o arquivo original. Complete o perfil de cálculo de cada caso antes de calcular.",
+        "Projeto de versão anterior aberto com os dados preservados. O próximo salvamento usará a versão 6; use Salvar como para conservar o arquivo original. Complete o perfil de cálculo de cada caso antes de calcular.",
       );
   };
   const apply = (p: Project) => {
@@ -458,15 +489,26 @@ export default function App() {
       if (ok !== "replace") return;
     }
     if (
-      ["region", "water", "load"].includes(t) &&
+      ["region", "water", "case-water", "load"].includes(t) &&
       terrainError(section.terrain)
     ) {
       notify("Defina primeiro um perfil de terreno válido.");
       return;
     }
-    if (t === "case-circle" && !selectedCase) {
+    if ((t === "case-circle" || t === "case-water") && !selectedCase) {
       notify("Selecione primeiro um caso de análise.");
       return;
+    }
+    if (t === "case-water" && selectedCase?.water) {
+      const ok = await ask(
+        "Substituir a linha piezométrica do caso?",
+        "A linha atual do caso será substituída quando o novo traçado for concluído.",
+        [
+          { value: "cancel", label: "Cancelar" },
+          { value: "replace", label: "Redesenhar linha", primary: true },
+        ],
+      );
+      if (ok !== "replace") return;
     }
     if (t === "terrain") setSelection({ kind: "terrain" });
     const target = contourTarget(selection);
@@ -490,7 +532,7 @@ export default function App() {
     }
     if (
       selection.kind === "case" &&
-      !["case-circle", "pan", "select", "measure"].includes(t)
+      !["case-circle", "case-water", "pan", "select", "measure"].includes(t)
     )
       setSelection({ kind: "terrain" });
     setTool(t);
@@ -555,6 +597,24 @@ export default function App() {
       const c = p.analysisCases.find((c) => c.id === selectedCase.id)!;
       c.fixedCircle = { ...points[0], radius: distance(points[0], points[1]) };
       c.surfaceMode = "fixed";
+      if (acceptGeometry(p)) {
+        setTool("select");
+        setDrawing(false);
+        setSelection({ kind: "case", id: c.id });
+        setFitToken((n) => n + 1);
+      }
+      return;
+    }
+    if (t === "case-water") {
+      if (!selectedCase) return;
+      const e = lineError(points);
+      if (e) {
+        notify(e);
+        return;
+      }
+      const c = p.analysisCases.find((c) => c.id === selectedCase.id)!;
+      c.water = points;
+      c.waterCondition = "case-piezometric";
       if (acceptGeometry(p)) {
         setTool("select");
         setDrawing(false);
@@ -810,6 +870,7 @@ export default function App() {
         "terrain",
         "region",
         "water",
+        "case-water",
         "load",
         "circle",
         "case-circle",
@@ -870,6 +931,8 @@ export default function App() {
     }
     if (a === "close") {
       if (await guardProject()) {
+        stopBatch();
+        setCaseRuns({});
         try {
           removeRecovery();
         } catch {}
@@ -932,10 +995,11 @@ export default function App() {
       a === "assign-material" ||
       a === "loads" ||
       a === "cases" ||
+      a === "compare-cases" ||
       a === "audit"
     ) {
       setTool("select");
-      setDialog(a);
+      setDialog(a === "compare-cases" ? "cases" : a);
       return;
     }
     if (a === "report") {
@@ -1327,6 +1391,7 @@ export default function App() {
                   onApply={apply}
                   onDirty={setDraftDirty}
                   onDrawCircle={() => void selectTool("case-circle")}
+                  onDrawWater={() => void selectTool("case-water")}
                   onBase={() => void select({ kind: "terrain" })}
                   onSearchPreview={setSearchOverlay}
                   onProfileApply={applyNumericalProfile}
@@ -1568,6 +1633,10 @@ export default function App() {
           <AnalysisCases
             project={project}
             section={section}
+            runs={caseRuns}
+            batchRunning={batchRunning}
+            onRunBatch={startBatch}
+            onCancelBatch={() => batchHandle.current?.cancel()}
             onNew={() => {
               setDialog(null);
               void action("new-case");

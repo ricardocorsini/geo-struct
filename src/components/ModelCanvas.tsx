@@ -1,4 +1,8 @@
-import { resolveCaseSection, directionLabel } from "../domain/analysis";
+import {
+  resolveCaseSection,
+  directionLabel,
+  describeEffectiveWater,
+} from "../domain/analysis";
 import { activeWater, activeLoads } from "../domain/conditions";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -50,6 +54,8 @@ export const instructions: Record<Tool, string> = {
   region: "Marque o contorno da região. Enter fecha · Esc cancela.",
   water:
     "Marque a linha piezométrica da esquerda para a direita. Enter conclui.",
+  "case-water":
+    "Marque a linha piezométrica deste caso da esquerda para a direita. Enter conclui · Esc cancela.",
   load: "Clique no início e no fim da faixa. Depois informe a sobrecarga nas propriedades.",
   "case-circle":
     "Clique no centro e em um ponto para definir o círculo fixo deste caso. Esc cancela.",
@@ -142,6 +148,7 @@ export function ModelCanvas({
     "terrain",
     "region",
     "water",
+    "case-water",
     "measure",
     ...twoPointTools,
   ].includes(tool);
@@ -631,7 +638,14 @@ export function ModelCanvas({
                 strokeWidth={12}
                 vectorEffect="non-scaling-stroke"
               />
-              {water.length > 0 && label(water.at(-1)!, "  LP", "#267aa4")}
+              {water.length > 0 &&
+                label(
+                  water.at(-1)!,
+                  analysisCase?.waterCondition === "case-piezometric"
+                    ? "  LP (caso)"
+                    : "  LP",
+                  "#267aa4",
+                )}
             </>
           )}
           {visibility.loads &&
@@ -917,16 +931,25 @@ export function ModelCanvas({
               : "Modelo geométrico · materiais atribuídos"
             : "Defina o perfil do terreno para começar"}
         </span>
-        {analysisCase && (
-          <div
-            className="case-preview-note"
-            role="note"
-            aria-label="Prévia do caso"
-          >
-            Prévia: {analysisCase.name} ·{" "}
-            {directionLabel(analysisCase.direction)} · prévia das entradas
-          </div>
-        )}
+        {analysisCase &&
+          (() => {
+            const waterInfo = describeEffectiveWater(section, analysisCase);
+            return (
+              <div
+                className="case-preview-note"
+                role="note"
+                aria-label="Prévia do caso"
+                data-water-origin={waterInfo.originKind}
+              >
+                Prévia: {analysisCase.name} ·{" "}
+                {directionLabel(analysisCase.direction)} · prévia das entradas
+                <div>
+                  Água: {waterInfo.originLabel}
+                  {waterInfo.source ? ` · ${waterInfo.source}` : ""}
+                </div>
+              </div>
+            );
+          })()}
       </div>
       <div className="canvas-controls">
         <button

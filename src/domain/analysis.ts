@@ -28,7 +28,9 @@ export const caseWaterLabel = (v: AnalysisCase["waterCondition"]) =>
       ? "Condição seca no caso"
       : v === "piezometric"
         ? "Usar linha da seção"
-        : "Água não definida no caso";
+        : v === "case-piezometric"
+          ? "Linha piezométrica do caso"
+          : "Água não definida no caso";
 export const caseLoadLabel = (v: AnalysisCase["loadCondition"]) =>
   v === "section"
     ? "Usar condição da seção"
@@ -85,6 +87,8 @@ export function addAnalysisCase(
         fixedCircle: { x: null, y: null, radius: null },
         search: { x: axis(), y: axis(), radius: axis() },
         waterCondition: null,
+        water: null,
+        waterUnitWeight: null,
         waterSource: "",
         loadCondition: null,
         loadIds: [],
@@ -149,7 +153,12 @@ export function removeSectionWithCases(p: Project, id: string): Project {
 export function resolveCaseSection(s: Section, c: AnalysisCase): Section {
   if (c.sectionId !== s.id) throw new Error("O caso pertence a outra seção.");
   const next = structuredClone(s);
-  if (c.waterCondition !== "section") {
+  if (c.waterCondition === "case-piezometric") {
+    next.waterMode = "piezometric";
+    next.water = c.water ? structuredClone(c.water) : null;
+    next.waterUnitWeight = c.waterUnitWeight;
+    next.waterSource = c.waterSource;
+  } else if (c.waterCondition !== "section") {
     next.waterMode = c.waterCondition ?? "unspecified";
     next.waterSource = c.waterSource;
   }
@@ -166,6 +175,50 @@ export function resolveCaseSection(s: Section, c: AnalysisCase): Section {
     }));
   }
   return next;
+}
+
+export type EffectiveWaterDescription = {
+  selectionLabel: string;
+  mode: Section["waterMode"];
+  originKind: "section" | "case" | "none";
+  originLabel: string;
+  unitWeight: number | null;
+  pointCount: number;
+  source: string;
+};
+
+export function describeEffectiveWater(
+  section: Section,
+  analysisCase: AnalysisCase,
+): EffectiveWaterDescription {
+  const resolved = resolveCaseSection(section, analysisCase);
+  const originKind =
+    analysisCase.waterCondition === null
+      ? "none"
+      : analysisCase.waterCondition === "section"
+        ? "section"
+        : "case";
+  const originLabel =
+    analysisCase.waterCondition === "section"
+      ? "Herdada da seção"
+      : analysisCase.waterCondition === "piezometric"
+        ? "Linha da seção · origem do caso"
+        : analysisCase.waterCondition === "case-piezometric"
+          ? "Própria do caso"
+          : analysisCase.waterCondition === "dry"
+            ? "Seca no caso"
+            : "Não definida";
+  return {
+    selectionLabel: caseWaterLabel(analysisCase.waterCondition),
+    mode: resolved.waterMode,
+    originKind,
+    originLabel,
+    unitWeight:
+      resolved.waterMode === "piezometric" ? resolved.waterUnitWeight : null,
+    pointCount:
+      resolved.waterMode === "piezometric" ? (resolved.water?.length ?? 0) : 0,
+    source: resolved.waterSource.trim(),
+  };
 }
 export type CaseIssue = { level: "warning" | "error"; message: string };
 export function caseIssues(c: AnalysisCase): CaseIssue[] {

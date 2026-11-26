@@ -189,13 +189,18 @@ test("migração v4 comunica o perfil incompleto e não inventa limiares ou resu
     ...p,
     version: 4,
     analysisCases: p.analysisCases.map(
-      ({ numericalProfile: _profile, ...c }) => c,
+      ({
+        numericalProfile: _profile,
+        water: _water,
+        waterUnitWeight: _unitWeight,
+        ...c
+      }) => c,
     ),
   };
   await page.goto("/");
   await load(page, legacy);
   await expect(page.getByRole("status")).toContainText(
-    "próximo salvamento usará a versão 5",
+    "próximo salvamento usará a versão 6",
   );
   await select(page);
   await expect(
@@ -211,7 +216,7 @@ test("migração v4 comunica o perfil incompleto e não inventa limiares ou resu
     page.getByLabel("Fator de segurança Fellenius", { exact: true }),
   ).toHaveCount(0);
   const saved = await save(page);
-  expect(saved.version).toBe(5);
+  expect(saved.version).toBe(6);
   expect(saved.sections).toEqual(p.sections);
   expect(saved.analysisCases[0]).toEqual(p.analysisCases[0]);
   await load(page, saved);

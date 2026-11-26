@@ -353,9 +353,9 @@ test("v2 sem água ou cargas abre como não definido e relatório identifica as 
   legacy.sections[0].water = null;
   legacy.sections[0].loads = [];
   await open(page, legacy);
-  await expect(page.getByRole("status")).toContainText("versão 5");
+  await expect(page.getByRole("status")).toContainText("versão 6");
   const result = await save(page);
-  expect(result.version).toBe(5);
+  expect(result.version).toBe(6);
   expect(result.sections[0]).toMatchObject({
     waterMode: "unspecified",
     loadCondition: "unspecified",
@@ -364,5 +364,5 @@ test("v2 sem água ou cargas abre como não definido e relatório identifica as 
   const report = page.locator("#project-report");
   await expect(report).toContainText("Água não definida");
   await expect(report).toContainText("Cargas não definidas");
-  await expect(report).toContainText("geostruct/5");
+  await expect(report).toContainText("geostruct/6");
 });

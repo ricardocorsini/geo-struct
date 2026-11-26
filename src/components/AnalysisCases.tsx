@@ -12,21 +12,32 @@ import {
 import {
   caseLoadLabel,
   caseWaterLabel,
+  describeEffectiveWater,
   directionLabel,
   methodLabel,
   surfaceLabel,
 } from "../domain/analysis";
-import { introducedError, parseNumber } from "../domain/geometry";
+import type { CaseRunRecord } from "../domain/case-comparison";
+import {
+  introducedError,
+  parseCoordinates,
+  parseNumber,
+} from "../domain/geometry";
 import { CoreInputPreview } from "./CoreInputPreview";
 import {
   FixedCirclePreview,
   type FixedCirclePreviewProps,
 } from "./FixedCirclePreview";
 import { CircularSearchPanel, type SearchOverlay } from "./CircularSearchPanel";
+import { ScenarioComparison } from "./ScenarioComparison";
 
 export function AnalysisCases({
   project,
   section,
+  runs,
+  batchRunning,
+  onRunBatch,
+  onCancelBatch,
   onNew,
   onEdit,
   onDuplicate,
@@ -34,6 +45,10 @@ export function AnalysisCases({
 }: {
   project: Project;
   section: Section;
+  runs: Record<string, CaseRunRecord>;
+  batchRunning: boolean;
+  onRunBatch: (caseIds: string[]) => void;
+  onCancelBatch: () => void;
   onNew: () => void;
   onEdit: (id: string) => void;
   onDuplicate: (id: string) => void;
@@ -171,6 +186,15 @@ export function AnalysisCases({
           {error}
         </p>
       )}
+      <ScenarioComparison
+        project={project}
+        section={section}
+        runs={runs}
+        batchRunning={batchRunning}
+        onRunBatch={onRunBatch}
+        onCancelBatch={onCancelBatch}
+        onEditCase={onEdit}
+      />
     </div>
   );
 }
@@ -182,6 +206,7 @@ export function CaseInspector({
   onApply,
   onDirty,
   onDrawCircle,
+  onDrawWater,
   onBase,
   geometryPreview,
   onSearchPreview,
@@ -194,6 +219,7 @@ export function CaseInspector({
   onApply: (p: Project) => void;
   onDirty: (v: boolean) => void;
   onDrawCircle: () => void;
+  onDrawWater: () => void;
   onBase: () => void;
   geometryPreview: Omit<
     FixedCirclePreviewProps,
@@ -209,6 +235,11 @@ export function CaseInspector({
     direction: c.direction ?? "",
     surfaceMode: c.surfaceMode ?? "",
     waterCondition: c.waterCondition ?? "",
+    waterUnitWeight:
+      c.waterUnitWeight === null ? "" : String(c.waterUnitWeight),
+    waterPoints: c.water
+      ? c.water.map((pt) => `${pt.x} ; ${pt.y}`).join("\n")
+      : "",
     waterSource: c.waterSource,
     loadCondition: c.loadCondition ?? "",
   };
@@ -366,6 +397,13 @@ export function CaseInspector({
         direction: values.direction || null,
         surfaceMode: values.surfaceMode || null,
         waterCondition: values.waterCondition || null,
+        waterUnitWeight: number(
+          "waterUnitWeight",
+          "Peso específico da água do caso",
+        ),
+        water: values.waterPoints.trim()
+          ? parseCoordinates(values.waterPoints)
+          : null,
         waterSource: values.waterSource,
         loadCondition: values.loadCondition || null,
         methods: [...methods],
@@ -491,11 +529,75 @@ export function CaseInspector({
             ["section", caseWaterLabel("section")],
             ["dry", caseWaterLabel("dry")],
             ["piezometric", caseWaterLabel("piezometric")],
+            ["case-piezometric", caseWaterLabel("case-piezometric")],
           ])}
           <p className="hint">
             Usar condição da seção acompanha suas alterações. Usar linha ativa a
-            linha e γw cadastrados, inclusive quando guardados na seção seca.
+            linha da seção. Linha piezométrica do caso guarda um traçado e γw
+            próprios neste caso, sem alterar a seção nem outros casos.
           </p>
+          <fieldset className="case-fields">
+            <legend>
+              Linha piezométrica do caso
+              {values.waterCondition !== "case-piezometric"
+                ? " · guardada, inativa"
+                : ""}
+            </legend>
+            {field(
+              "waterUnitWeight",
+              "Peso específico da água γw do caso (kN/m³)",
+              true,
+            )}
+            {textField(
+              "waterPoints",
+              "Coordenadas da linha piezométrica do caso (X ; Z em m)",
+            )}
+            <div className="case-water-actions">
+              <button className="secondary" type="button" onClick={onDrawWater}>
+                Desenhar linha do caso
+              </button>
+              <button
+                className="text-button"
+                type="button"
+                disabled={!section.water}
+                onClick={() => {
+                  if (!section.water) return;
+                  setValues((v) => ({
+                    ...v,
+                    waterCondition: "case-piezometric",
+                    waterUnitWeight:
+                      section.waterUnitWeight === null
+                        ? v.waterUnitWeight
+                        : String(section.waterUnitWeight),
+                    waterPoints: section
+                      .water!.map((pt) => `${pt.x} ; ${pt.y}`)
+                      .join("\n"),
+                  }));
+                  setDirty(true);
+                  setError("");
+                }}
+              >
+                Copiar linha da seção
+              </button>
+            </div>
+          </fieldset>
+          {(() => {
+            const waterInfo = describeEffectiveWater(section, c);
+            return (
+              <div className="info-card" aria-label="Origem da água efetiva">
+                <strong>Água aplicada: {waterInfo.originLabel}</strong>
+                {waterInfo.mode === "piezometric" && (
+                  <small>
+                    {waterInfo.pointCount} ponto(s) · γw ={" "}
+                    {waterInfo.unitWeight ?? "pendente"} kN/m³
+                  </small>
+                )}
+                {waterInfo.source && (
+                  <small>Origem registrada: {waterInfo.source}</small>
+                )}
+              </div>
+            );
+          })()}
           {textField("waterSource", "Origem da água no caso")}
           <p className="hint">
             Justifique a hipótese própria seca/piezométrica. Ao usar a condição

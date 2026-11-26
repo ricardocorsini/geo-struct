@@ -15,7 +15,7 @@ export type CoreInput = Immutable<{
   contract: "geostruct-input/1";
   stage: "inputs-only";
   origin: {
-    projectFormat: "geostruct/5";
+    projectFormat: "geostruct/6";
     project: { id: string; name: string };
     section: { id: string; name: string };
     analysisCase: { id: string; name: string };
@@ -54,7 +54,7 @@ export type CoreInput = Immutable<{
     source: string;
   }[];
   water: {
-    selection: "section" | "dry" | "piezometric" | null;
+    selection: "section" | "dry" | "piezometric" | "case-piezometric" | null;
     mode: "unspecified" | "dry" | "piezometric";
     source: string;
     // Só pertencem à entrada efetiva quando o modo é piezométrico.

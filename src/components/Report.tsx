@@ -10,6 +10,7 @@ import {
 import {
   caseWaterLabel,
   caseLoadLabel,
+  describeEffectiveWater,
   directionLabel,
   surfaceLabel,
   methodLabel,
@@ -44,6 +45,7 @@ function CaseReport({
       )}
       {cases.map((c) => {
         const resolved = resolveCaseSection(section, c),
+          waterInfo = describeEffectiveWater(section, c),
           loads = activeLoads(resolved),
           water = activeWater(resolved);
         return (
@@ -60,9 +62,9 @@ function CaseReport({
               Coordenadas no referencial original X/Z da seção.
             </p>
             <p>
-              Água: {caseWaterLabel(c.waterCondition)}. Condição resultante:{" "}
-              {waterModeLabel(resolved.waterMode)}. Origem:{" "}
-              {resolved.waterSource.trim() || "Não informada"}.
+              Água: {caseWaterLabel(c.waterCondition)} ({waterInfo.originLabel}
+              ). Condição resultante: {waterModeLabel(resolved.waterMode)}.
+              Origem: {resolved.waterSource.trim() || "Não informada"}.
             </p>
             {c.waterCondition === "section" && c.waterSource.trim() && (
               <p>Origem própria guardada, inativa: {c.waterSource}</p>
