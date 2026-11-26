@@ -390,7 +390,7 @@ export default function App() {
     setDialog(null);
     if (migrated)
       notify(
-        "Projeto de versão anterior aberto com os dados preservados. O próximo salvamento usará a versão 5; use Salvar como para conservar o arquivo original. Complete o perfil de cálculo de cada caso antes de calcular.",
+        "Projeto de versão anterior aberto com os dados preservados. O próximo salvamento usará a versão 6; use Salvar como para conservar o arquivo original. Complete o perfil de cálculo de cada caso antes de calcular.",
       );
   };
   const apply = (p: Project) => {
@@ -464,7 +464,10 @@ export default function App() {
       notify("Defina primeiro um perfil de terreno válido.");
       return;
     }
-    if (t === "case-circle" && !selectedCase) {
+    if (
+      (t === "case-circle" || t === "case-entry" || t === "case-exit") &&
+      !selectedCase
+    ) {
       notify("Selecione primeiro um caso de análise.");
       return;
     }
@@ -490,7 +493,14 @@ export default function App() {
     }
     if (
       selection.kind === "case" &&
-      !["case-circle", "pan", "select", "measure"].includes(t)
+      ![
+        "case-circle",
+        "case-entry",
+        "case-exit",
+        "pan",
+        "select",
+        "measure",
+      ].includes(t)
     )
       setSelection({ kind: "terrain" });
     setTool(t);
@@ -560,6 +570,23 @@ export default function App() {
         setDrawing(false);
         setSelection({ kind: "case", id: c.id });
         setFitToken((n) => n + 1);
+      }
+      return;
+    }
+    if (t === "case-entry" || t === "case-exit") {
+      if (!selectedCase) return;
+      const c = p.analysisCases.find((c) => c.id === selectedCase.id)!;
+      const range = {
+        min: Math.min(points[0].x, points[1].x),
+        max: Math.max(points[0].x, points[1].x),
+      };
+      if (t === "case-entry") c.search.entryRange = range;
+      else c.search.exitRange = range;
+      c.surfaceMode = "search";
+      if (acceptGeometry(p)) {
+        setTool("select");
+        setDrawing(false);
+        setSelection({ kind: "case", id: c.id });
       }
       return;
     }
@@ -813,6 +840,8 @@ export default function App() {
         "load",
         "circle",
         "case-circle",
+        "case-entry",
+        "case-exit",
         "insert-vertex",
         "delete-vertex",
         "move-contour",
@@ -1327,6 +1356,8 @@ export default function App() {
                   onApply={apply}
                   onDirty={setDraftDirty}
                   onDrawCircle={() => void selectTool("case-circle")}
+                  onDrawEntry={() => void selectTool("case-entry")}
+                  onDrawExit={() => void selectTool("case-exit")}
                   onBase={() => void select({ kind: "terrain" })}
                   onSearchPreview={setSearchOverlay}
                   onProfileApply={applyNumericalProfile}

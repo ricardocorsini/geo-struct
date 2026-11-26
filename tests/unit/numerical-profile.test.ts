@@ -25,7 +25,13 @@ function legacyV4() {
   return {
     ...project,
     version: 4,
-    analysisCases: project.analysisCases.map(({ numericalProfile, ...c }) => c),
+    analysisCases: project.analysisCases.map(
+      ({
+        numericalProfile,
+        search: { entryRange: _e, exitRange: _s, ...search },
+        ...c
+      }) => ({ ...c, search }),
+    ),
   };
 }
 
@@ -88,7 +94,7 @@ describe("Perfil numérico por caso", () => {
     const reopened = readProject(serializeProject(project));
     expect(reopened).toEqual({ project: before, migrated: false });
     expect(project).toEqual(before);
-    expect(reopened.project.version).toBe(5);
+    expect(reopened.project.version).toBe(6);
     expect(
       reopened.project.analysisCases[0].numericalProfile.geometry.toleranceM,
     ).toBe(0.0000123456789);
@@ -302,10 +308,15 @@ describe("Migração estrita de geostruct/4", () => {
     expect(migrated).toBe(true);
     expect(project).toEqual({
       ...old,
-      version: 5,
+      version: 6,
       analysisCases: old.analysisCases.map((c) => ({
         ...c,
         numericalProfile: emptyNumericalProfile(),
+        search: {
+          ...c.search,
+          entryRange: { min: null, max: null },
+          exitRange: { min: null, max: null },
+        },
       })),
     });
     expect(old).toEqual(before);
@@ -346,14 +357,17 @@ describe("Migração estrita de geostruct/4", () => {
       expect(() => readProject(JSON.stringify(value))).toThrow(/inválido/);
   });
 
-  it("exige perfil no formato 5 sem migrar silenciosamente arquivo incompleto", () => {
+  it("exige perfil no formato 5/6 sem migrar silenciosamente arquivo incompleto", () => {
     const old = legacyV4();
     expect(() => readProject(JSON.stringify({ ...old, version: 5 }))).toThrow(
       /numericalProfile/,
     );
+    expect(() => readProject(JSON.stringify({ ...old, version: 6 }))).toThrow(
+      /numericalProfile/,
+    );
     const empty = { ...old, analysisCases: [] };
     expect(readProject(JSON.stringify(empty))).toEqual({
-      project: { ...empty, version: 5 },
+      project: { ...empty, version: 6 },
       migrated: true,
     });
   });

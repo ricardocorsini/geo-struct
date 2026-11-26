@@ -231,7 +231,7 @@ test("exclui o último material sem uso e continua desenhando sem atribuição p
   expect(result.sections[0].regions[0].materialId).toBeNull();
   await page.getByRole("button", { name: "Entradas", exact: true }).click();
   await expect(page.locator("#project-report")).toContainText("Sem material");
-  await expect(page.locator("#project-report")).toContainText("geostruct/5");
+  await expect(page.locator("#project-report")).toContainText("geostruct/6");
 });
 
 test("localiza uma atribuição de outra seção pelo gerenciador", async ({
@@ -271,9 +271,9 @@ test("leitura de v1 comunica migração e o salvamento v5 preserva todos os dado
     "versão anterior aberto",
   );
   const result = await save(page);
-  expect(result).toMatchObject({ ...legacy, version: 5 });
+  expect(result).toMatchObject({ ...legacy, version: 6 });
   await page.locator("input[type=file]").setInputFiles({
-    name: "v5.geo.json",
+    name: "v6.geo.json",
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(result)),
   });
@@ -299,5 +299,5 @@ test("recuperação local antiga também preserva materiais e referências", asy
   );
   await page.goto("/");
   await page.getByRole("button", { name: /Recuperar trabalho local/ }).click();
-  expect(await save(page)).toMatchObject({ ...legacy, version: 5 });
+  expect(await save(page)).toMatchObject({ ...legacy, version: 6 });
 });

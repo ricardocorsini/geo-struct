@@ -46,7 +46,7 @@ describe("contrato de entrada do núcleo", () => {
     expect(result.status).toBe("collected");
     const input = result.snapshot!.input;
     expect(input.origin).toEqual({
-      projectFormat: "geostruct/5",
+      projectFormat: "geostruct/6",
       project: { id: p.id, name: p.name },
       section: { id: s.id, name: s.name },
       analysisCase: { id: c.id, name: c.name },
@@ -195,6 +195,7 @@ describe("contrato de entrada do núcleo", () => {
     const { p, c } = fixture();
     c.surfaceMode = "search";
     c.search = {
+      ...c.search,
       x: { min: 0, max: 10, step: 0.3 },
       y: { min: 30, max: 30, step: null },
       radius: { min: 20, max: 25, step: 2 },
@@ -204,6 +205,7 @@ describe("contrato de entrada do núcleo", () => {
     expect(prepared.snapshot!.input.surface).toEqual({
       mode: "search",
       axes: { x: c.search.x, z: c.search.y, radius: c.search.radius },
+      limits: { entry: c.search.entryRange, exit: c.search.exitRange },
     });
     expect(prepared.snapshot!.input.surface).not.toHaveProperty("circle");
     expect(prepared.snapshot!.input.surface).not.toHaveProperty("candidates");

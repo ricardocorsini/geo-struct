@@ -288,7 +288,7 @@ describe("Condições de água/cargas e migração", () => {
       old.sections[0].loads[0].q = 0;
       const { project, migrated } = readProject(JSON.stringify(old));
       expect(migrated).toBe(true);
-      expect(project).toMatchObject({ ...old, version: 5 });
+      expect(project).toMatchObject({ ...old, version: 6 });
       expect(project.sections[0]).toMatchObject({
         waterMode: "piezometric",
         waterUnitWeight: null,

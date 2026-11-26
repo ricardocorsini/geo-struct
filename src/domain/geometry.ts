@@ -362,6 +362,29 @@ export function diagnose(p: Project): Diagnostic[] {
         sectionId: c.sectionId,
         message: `${section.name} · ${c.name}: ${issue.message}`,
       });
+    if (c.surfaceMode === "search" && section.terrain.length >= 2) {
+      const tMin = section.terrain[0].x,
+        tMax = section.terrain.at(-1)!.x;
+      for (const [rangeKey, rangeLabel] of [
+        ["entryRange", "Trecho de entrada"],
+        ["exitRange", "Trecho de saída"],
+      ] as const) {
+        const { min, max } = c.search[rangeKey];
+        if (
+          min !== null &&
+          max !== null &&
+          max >= min &&
+          (min < tMin - EPS || max > tMax + EPS)
+        ) {
+          out.push({
+            level: "warning",
+            target: c.id,
+            sectionId: c.sectionId,
+            message: `${section.name} · ${c.name}: ${rangeLabel} ultrapassa os limites horizontais do terreno.`,
+          });
+        }
+      }
+    }
     const resolved = resolveCaseSection(section, c);
     for (const d of diagnose({
       ...p,

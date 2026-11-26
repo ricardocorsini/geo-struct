@@ -46,6 +46,8 @@ export function defaultProject(): Project {
       x: { min: 30, max: 34, step: 2 },
       y: { min: 30, max: 34, step: 2 },
       radius: { min: 23, max: 27, step: 2 },
+      entryRange: { min: null, max: null },
+      exitRange: { min: null, max: null },
     },
   };
   Object.assign(analysisCase, setup);

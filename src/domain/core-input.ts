@@ -61,7 +61,7 @@ export function prepareCoreInput(
     contract: "geostruct-input/1",
     stage: "inputs-only",
     origin: {
-      projectFormat: "geostruct/5",
+      projectFormat: "geostruct/6",
       project: { id: p.id, name: p.name },
       section: { id: section.id, name: section.name },
       analysisCase: { id: c.id, name: c.name },
@@ -136,6 +136,10 @@ export function prepareCoreInput(
                 x: { ...c.search.x },
                 z: { ...c.search.y },
                 radius: { ...c.search.radius },
+              },
+              limits: {
+                entry: { ...c.search.entryRange },
+                exit: { ...c.search.exitRange },
               },
             }
           : { mode: null },

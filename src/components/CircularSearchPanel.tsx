@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MAX_BISHOP_ITERATIONS } from "../core/bishop";
 import type {
   CircularSearchProfile,
+  RefinementConfig,
   SearchCircleEvaluation,
   SearchMethod,
   SearchProgress,
@@ -71,15 +72,23 @@ export function CircularSearchPanel({
   preparation,
   dirty,
   onPreview,
+  onEditLimits,
   initialProfile,
   onProfileChange,
 }: {
   preparation: InputPreparation;
   dirty: boolean;
   onPreview: (overlay: SearchOverlay | null) => void;
+  onEditLimits: () => void;
   initialProfile: NumericalProfile["search"];
   onProfileChange: (fields: Record<Field, string>) => void;
 }) {
+  const [refineFields, setRefineFields] = useState({
+    stages: "2",
+    topRegions: "2",
+    subdivisionFactor: "2",
+    maxTotalCandidates: "1000",
+  });
   const [hasSavedProfile] = useState(
     () => initialProfile.geometry.toleranceM !== null,
   );
@@ -142,11 +151,9 @@ export function CircularSearchPanel({
       : null;
   const running = !dirty && run.status === "running";
 
-  const start = () => {
-    if (dirty || running || grid?.status !== "ready") return;
-    reset();
+  const buildProfile = (): CircularSearchProfile => {
     const read = (key: Field) => parseNumber(values[key]) ?? NaN;
-    const profile: CircularSearchProfile = {
+    return {
       geometry: {
         toleranceM: read("toleranceM"),
         maxArcDegrees: read("maxArcDegrees"),
@@ -165,13 +172,24 @@ export function CircularSearchPanel({
           }
         : null,
     };
+  };
+
+  const launchSearch = (refinement?: RefinementConfig) => {
+    if (dirty || running || grid?.status !== "ready") return;
+    reset();
+    const profile = buildProfile();
+    const total = refinement
+      ? Math.min(MAX_SEARCH_CANDIDATES, refinement.maxTotalCandidates)
+      : grid.grid.total;
     setRun({
       status: "running",
-      progress: { completed: 0, total: grid.grid.total },
+      progress: { completed: 0, total },
     });
     try {
       worker.current = startSearchWorker(
-        { type: "run", preparation, profile },
+        refinement
+          ? { type: "refine", preparation, profile, refinement }
+          : { type: "run", preparation, profile },
         (response) => {
           if (response.type === "progress") {
             setRun({ status: "running", progress: response.progress });
@@ -195,6 +213,17 @@ export function CircularSearchPanel({
         message: "Não foi possível iniciar a busca em segundo plano.",
       });
     }
+  };
+
+  const start = () => launchSearch();
+  const startRefine = () => {
+    const num = (v: string) => Math.trunc(parseNumber(v) ?? NaN);
+    launchSearch({
+      stages: num(refineFields.stages),
+      topRegions: num(refineFields.topRegions),
+      subdivisionFactor: num(refineFields.subdivisionFactor),
+      maxTotalCandidates: num(refineFields.maxTotalCandidates),
+    });
   };
 
   const inspect = (location: SearchLocation, method: SearchMethod | null) => {
@@ -314,6 +343,16 @@ export function CircularSearchPanel({
               >
                 Iniciar busca circular
               </button>
+              <button
+                className="secondary"
+                type="button"
+                onClick={startRefine}
+                disabled={running || grid?.status !== "ready"}
+              >
+                {completed?.refinement
+                  ? "Repetir refinamento"
+                  : "Refinar regiões"}
+              </button>
               {running && (
                 <button
                   className="secondary"
@@ -327,6 +366,68 @@ export function CircularSearchPanel({
                 </button>
               )}
             </div>
+            <details className="search-refinement">
+              <summary>Refinamento de regiões candidatas</summary>
+              <div className="refinement-controls">
+                <label className="field">
+                  <span>Etapas (2 a 5)</span>
+                  <input
+                    aria-label="Refinamento · Etapas"
+                    inputMode="numeric"
+                    value={refineFields.stages}
+                    disabled={dirty || running}
+                    onChange={(e) =>
+                      setRefineFields((f) => ({ ...f, stages: e.target.value }))
+                    }
+                  />
+                </label>
+                <label className="field">
+                  <span>Regiões por etapa (1 a 5)</span>
+                  <input
+                    aria-label="Refinamento · Regiões por etapa"
+                    inputMode="numeric"
+                    value={refineFields.topRegions}
+                    disabled={dirty || running}
+                    onChange={(e) =>
+                      setRefineFields((f) => ({
+                        ...f,
+                        topRegions: e.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label className="field">
+                  <span>Subdivisão do passo (2 a 4)</span>
+                  <input
+                    aria-label="Refinamento · Subdivisão"
+                    inputMode="numeric"
+                    value={refineFields.subdivisionFactor}
+                    disabled={dirty || running}
+                    onChange={(e) =>
+                      setRefineFields((f) => ({
+                        ...f,
+                        subdivisionFactor: e.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label className="field">
+                  <span>Orçamento máximo de círculos</span>
+                  <input
+                    aria-label="Refinamento · Orçamento"
+                    inputMode="numeric"
+                    value={refineFields.maxTotalCandidates}
+                    disabled={dirty || running}
+                    onChange={(e) =>
+                      setRefineFields((f) => ({
+                        ...f,
+                        maxTotalCandidates: e.target.value,
+                      }))
+                    }
+                  />
+                </label>
+              </div>
+            </details>
             {hasSavedProfile && (
               <details className="search-profile">
                 <summary>Perfil de cálculo do caso</summary>
@@ -362,6 +463,7 @@ export function CircularSearchPanel({
               <CircularSearchResults
                 result={completed}
                 onInspect={inspect}
+                onEditLimits={onEditLimits}
                 onList={() => setInspection({ kind: "list" })}
               />
             )}

@@ -40,6 +40,8 @@ export function searchStageLabel(
   switch (stage) {
     case "geometry":
       return "Geometria";
+    case "limits":
+      return "Trechos de entrada/saída";
     case "weights":
       return "Peso próprio";
     case "pressures":
@@ -57,23 +59,74 @@ export function CircularSearchResults({
   result,
   onList,
   onInspect,
+  onEditLimits,
 }: {
   result: CompletedSearch;
   onList: () => void;
   onInspect: (location: SearchLocation, method: SearchMethod) => void;
+  onEditLimits?: () => void;
 }) {
+  const totalEvaluated = result.candidates.length;
+  const geometricDescartes =
+    totalEvaluated - result.geometricCount - result.filteredCount;
   return (
     <section
       aria-label="Resultado da busca circular"
       className="search-results"
     >
       <p role="status">
-        <strong>Busca concluída.</strong> {result.grid.total} círculos
-        avaliados. Geometria preparada em {result.geometricCount}.
+        <strong>
+          {result.refinement ? "Refinamento concluído." : "Busca concluída."}
+        </strong>{" "}
+        {totalEvaluated} círculos avaliados. Geometria preparada em{" "}
+        {result.geometricCount}.
       </p>
-      <p>
-        Descartes na geometria: {result.grid.total - result.geometricCount}.
-      </p>
+      <p>Descartes na geometria: {geometricDescartes}.</p>
+      {result.filteredCount > 0 && (
+        <p>Descartes por trechos de entrada/saída: {result.filteredCount}.</p>
+      )}
+      {result.refinement && (
+        <div
+          className="info-card"
+          role="region"
+          aria-label="Cobertura do refinamento"
+        >
+          <p>
+            <strong>
+              {result.refinement.regions.length} região(ões) visitada(s)
+            </strong>{" "}
+            em até {result.refinement.config.stages} etapa(s) · orçamento{" "}
+            {result.refinement.uniqueEvaluated}/
+            {result.refinement.config.maxTotalCandidates} círculos.
+          </p>
+          {result.refinement.budgetReached && (
+            <p>
+              Aviso: orçamento de candidatos atingido; algumas regiões foram
+              interrompidas no limite configurado.
+            </p>
+          )}
+          <details className="search-refinement">
+            <summary>Regiões visitadas no refinamento</summary>
+            <ul aria-label="Lista de regiões refinadas">
+              {result.refinement.regions.map((region) => (
+                <li key={`${region.stage}-${region.regionIndex}`}>
+                  Etapa {region.stage} · região {region.regionIndex}:{" "}
+                  {region.evaluatedCount} novo(s)
+                  {region.reusedCount > 0
+                    ? ` (${region.reusedCount} reaproveitado(s))`
+                    : ""}{" "}
+                  · X [{exactNumber(region.bounds.x.min ?? 0)} ;{" "}
+                  {exactNumber(region.bounds.x.max ?? 0)}] · Z [
+                  {exactNumber(region.bounds.z.min ?? 0)} ;{" "}
+                  {exactNumber(region.bounds.z.max ?? 0)}] · R [
+                  {exactNumber(region.bounds.radius.min ?? 0)} ;{" "}
+                  {exactNumber(region.bounds.radius.max ?? 0)}] m.
+                </li>
+              ))}
+            </ul>
+          </details>
+        </div>
+      )}
       {result.rankings.map((ranking) => {
         const { method, minimum, ties } = ranking;
         const exactTies = ties.filter((tie) => tie.difference === 0).length;
@@ -90,19 +143,37 @@ export function CircularSearchResults({
               <>
                 <p>
                   <strong>
-                    Menor FS na malha = {number(minimum.factorOfSafety)}
+                    {result.refinement
+                      ? "Menor FS na cobertura refinada = "
+                      : "Menor FS na malha = "}
+                    {number(minimum.factorOfSafety)}
                   </strong>{" "}
                   · círculo {minimum.location.number}.
                 </p>
                 <p>{describeCircle(minimum.location.circle)}</p>
                 {minimum.boundaryAxes.length > 0 && (
-                  <p>
-                    Aviso: mínimo na borda amostrada (
-                    {minimum.boundaryAxes
-                      .map((axis) => axisLabels[axis])
-                      .join(", ")}
-                    ). Confira os limites e os passos.
-                  </p>
+                  <div
+                    className="boundary-warning"
+                    role="alert"
+                    aria-label={`Aviso de borda · ${label}`}
+                  >
+                    <p>
+                      Aviso: mínimo na borda amostrada (
+                      {minimum.boundaryAxes
+                        .map((axis) => axisLabels[axis])
+                        .join(", ")}
+                      ). Amplie os limites ou ajuste os passos.
+                    </p>
+                    {onEditLimits && (
+                      <button
+                        type="button"
+                        className="secondary"
+                        onClick={onEditLimits}
+                      >
+                        Ajustar limites da busca
+                      </button>
+                    )}
+                  </div>
                 )}
                 {exactTies > 0 && (
                   <p>
@@ -293,9 +364,11 @@ export function CircularSearchTable({
                         </td>
                         <td>{describeCircle(location.circle)}</td>
                         <td>
-                          {candidate.sliceCount === null
-                            ? "Inadmissível"
-                            : `${candidate.sliceCount} fatias`}
+                          {candidate.filteredOut
+                            ? "Fora dos trechos"
+                            : candidate.sliceCount === null
+                              ? "Inadmissível"
+                              : `${candidate.sliceCount} fatias`}
                         </td>
                         {result.rankings.map((ranking) => {
                           const method = candidate.methods.find(

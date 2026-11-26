@@ -1637,3 +1637,36 @@ kbd {
   cursor: pointer;
   font-weight: 600;
 }
+
+.case-water-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.boundary-warning {
+  margin: 8px 0;
+  padding: 8px 10px;
+  border-radius: 5px;
+  border: 1px solid #b4782e;
+  background: #fcf4e8;
+  color: #6b4112;
+}
+
+.boundary-warning p {
+  margin: 0 0 8px;
+  font-weight: 550;
+}
+
+:root[data-theme="dark"] .boundary-warning {
+  background: #3a2b17;
+  color: #f0c285;
+}
+
+.refinement-controls {
+  margin-top: 8px;
+  display: grid;
+  gap: 6px;
+}

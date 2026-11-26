@@ -12,6 +12,7 @@ function model() {
   c.surfaceMode = "search";
   c.methods = ["fellenius", "bishop"];
   c.search = {
+    ...c.search,
     x: { min: 0, max: 0, step: null },
     y: { min: 4, max: 4, step: null },
     radius: { min: 3, max: 6.05, step: 1 },
@@ -169,6 +170,7 @@ test("cancela um Worker com progresso e reinicia em outro caso sem resultado ant
   const c = p.analysisCases[0];
   c.methods = ["fellenius"];
   c.search = {
+    ...c.search,
     x: { min: -3, max: 3, step: 0.12 },
     y: { min: 3.5, max: 4.5, step: 0.05 },
     radius: { min: 4.8, max: 5.6, step: 0.1 },

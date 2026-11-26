@@ -1,6 +1,7 @@
 import {
   evaluateSearchCircle,
   runCircularSearch,
+  runRefinedCircularSearch,
 } from "../core/circular-search";
 import type { SearchRequest, SearchResponse } from "./circular-search-messages";
 
@@ -19,21 +20,26 @@ self.onmessage = ({ data }: MessageEvent<SearchRequest>) => {
       return;
     }
     let lastUpdate = 0;
-    const result = runCircularSearch(
-      data.preparation,
-      data.profile,
-      (progress) => {
-        const now = performance.now();
-        if (
-          progress.completed === 0 ||
-          progress.completed === progress.total ||
-          now - lastUpdate >= 100
-        ) {
-          send({ type: "progress", progress });
-          lastUpdate = now;
-        }
-      },
-    );
+    const onProgress = (progress: { completed: number; total: number }) => {
+      const now = performance.now();
+      if (
+        progress.completed === 0 ||
+        progress.completed === progress.total ||
+        now - lastUpdate >= 100
+      ) {
+        send({ type: "progress", progress });
+        lastUpdate = now;
+      }
+    };
+    const result =
+      data.type === "refine"
+        ? runRefinedCircularSearch(
+            data.preparation,
+            data.profile,
+            data.refinement,
+            onProgress,
+          )
+        : runCircularSearch(data.preparation, data.profile, onProgress);
     send({ type: "result", result });
   } catch (error) {
     send({

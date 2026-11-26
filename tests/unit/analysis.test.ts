@@ -214,6 +214,7 @@ describe("Conferência das entradas de casos", () => {
     const { p, c } = fixture();
     c.surfaceMode = "search";
     c.search = {
+      ...c.search,
       x: { min: 0, max: 10, step: null },
       y: { min: 20, max: 20, step: null },
       radius: { min: 10, max: 20, step: 1 },
@@ -230,6 +231,7 @@ describe("Conferência das entradas de casos", () => {
   it("troca de modo conserva dados e acusa limites invertidos quando ativos", () => {
     const { p, c } = fixture();
     c.search = {
+      ...c.search,
       x: { min: 10, max: 0, step: 1 },
       y: { min: 20, max: 30, step: 1 },
       radius: { min: 10, max: 20, step: 1 },
@@ -303,7 +305,7 @@ describe("Conferência das entradas de casos", () => {
     expect(projectSchema.safeParse(p).success).toBe(false);
   });
 });
-describe("Migração para v5", () => {
+describe("Migração para v6", () => {
   const legacy = () =>
     JSON.parse(
       readFileSync(
@@ -319,7 +321,7 @@ describe("Migração para v5", () => {
       old.sections[0].circle = { x: 10, y: 20, radius: 5 };
       const { project, migrated } = readProject(JSON.stringify(old));
       expect(migrated).toBe(true);
-      expect(project).toMatchObject({ ...old, version: 5, analysisCases: [] });
+      expect(project).toMatchObject({ ...old, version: 6, analysisCases: [] });
     },
   );
   it("v3 preserva integralmente dados, inativos e pendências, acrescentando lista vazia", () => {
@@ -330,11 +332,38 @@ describe("Migração para v5", () => {
     const old = { ...data, version: 3 };
     const result = readProject(JSON.stringify(old));
     expect(result).toEqual({
-      project: { ...old, version: 5, analysisCases: [] },
+      project: { ...old, version: 6, analysisCases: [] },
       migrated: true,
     });
   });
-  it("v5 não descarta campo desconhecido de caso nem aceita referência ausente", () => {
+  it("v5 preserva casos e busca, acrescentando trechos nulos", () => {
+    const { p, c } = fixture();
+    const { entryRange: _e, exitRange: _s, ...v5Search } = c.search;
+    const old = {
+      ...p,
+      version: 5,
+      analysisCases: [{ ...c, search: v5Search }],
+    };
+    const result = readProject(JSON.stringify(old));
+    expect(result).toEqual({
+      project: {
+        ...old,
+        version: 6,
+        analysisCases: [
+          {
+            ...c,
+            search: {
+              ...v5Search,
+              entryRange: { min: null, max: null },
+              exitRange: { min: null, max: null },
+            },
+          },
+        ],
+      },
+      migrated: true,
+    });
+  });
+  it("v6 não descarta campo desconhecido de caso nem aceita referência ausente", () => {
     const { p, c } = fixture();
     const data = JSON.parse(serializeProject(p));
     data.analysisCases[0].solverResult = 1.5;

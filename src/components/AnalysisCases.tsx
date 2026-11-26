@@ -1,5 +1,5 @@
 import { auditProject } from "../domain/audit";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, RotateCcw } from "lucide-react";
 import {
   projectSchema,
@@ -182,6 +182,8 @@ export function CaseInspector({
   onApply,
   onDirty,
   onDrawCircle,
+  onDrawEntry,
+  onDrawExit,
   onBase,
   geometryPreview,
   onSearchPreview,
@@ -194,6 +196,8 @@ export function CaseInspector({
   onApply: (p: Project) => void;
   onDirty: (v: boolean) => void;
   onDrawCircle: () => void;
+  onDrawEntry: () => void;
+  onDrawExit: () => void;
   onBase: () => void;
   geometryPreview: Omit<
     FixedCirclePreviewProps,
@@ -203,6 +207,7 @@ export function CaseInspector({
   onProfileApply: (profile: NumericalProfile) => void;
   onDiscard: () => void;
 }) {
+  const limitsRef = useRef<HTMLFieldSetElement>(null);
   const initial: Record<string, string> = {
     name: c.name,
     description: c.description,
@@ -211,6 +216,14 @@ export function CaseInspector({
     waterCondition: c.waterCondition ?? "",
     waterSource: c.waterSource,
     loadCondition: c.loadCondition ?? "",
+    "entry.min":
+      c.search.entryRange.min === null ? "" : String(c.search.entryRange.min),
+    "entry.max":
+      c.search.entryRange.max === null ? "" : String(c.search.entryRange.max),
+    "exit.min":
+      c.search.exitRange.min === null ? "" : String(c.search.exitRange.min),
+    "exit.max":
+      c.search.exitRange.max === null ? "" : String(c.search.exitRange.max),
   };
   for (const [key, value] of Object.entries(c.fixedCircle))
     initial[`fixed.${key}`] = value === null ? "" : String(value);
@@ -382,6 +395,14 @@ export function CaseInspector({
           max: number(`search.${key}.max`, "Máximo"),
           step: number(`search.${key}.step`, "Passo"),
         };
+      edited.search.entryRange = {
+        min: number("entry.min", "Entrada X mínimo"),
+        max: number("entry.max", "Entrada X máximo"),
+      };
+      edited.search.exitRange = {
+        min: number("exit.min", "Saída X mínimo"),
+        max: number("exit.max", "Saída X máximo"),
+      };
       const parsed = projectSchema.safeParse(next);
       if (!parsed.success)
         throw new Error(
@@ -405,6 +426,13 @@ export function CaseInspector({
         preparation={geometryPreview.preparation}
         dirty={dirty}
         onPreview={onSearchPreview}
+        onEditLimits={() => {
+          limitsRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+          });
+          limitsRef.current?.querySelector("input")?.focus();
+        }}
         initialProfile={profile.search}
         onProfileChange={(fields) => updateProfile("search", fields)}
       />
@@ -579,7 +607,7 @@ export function CaseInspector({
               Copiar círculo de tentativa
             </button>
           </fieldset>
-          <fieldset className="case-fields">
+          <fieldset className="case-fields" ref={limitsRef}>
             <legend>
               Limites da busca
               {values.surfaceMode !== "search" ? " · guardados, inativos" : ""}
@@ -600,10 +628,50 @@ export function CaseInspector({
                 {field(`search.${axis}.step`, `${label} passo (m)`, true)}
               </div>
             ))}
+            <h3>Trechos admissíveis no terreno</h3>
+            <div className="field-row">
+              {field("entry.min", "Entrada X mínimo (m)", true)}
+              {field("entry.max", "Entrada X máximo (m)", true)}
+            </div>
+            <div className="field-row">
+              {field("exit.min", "Saída X mínimo (m)", true)}
+              {field("exit.max", "Saída X máximo (m)", true)}
+            </div>
+            <div className="case-water-actions">
+              <button className="secondary" type="button" onClick={onDrawEntry}>
+                Marcar entrada no desenho
+              </button>
+              <button className="secondary" type="button" onClick={onDrawExit}>
+                Marcar saída no desenho
+              </button>
+              <button
+                className="text-button"
+                type="button"
+                disabled={
+                  !values["entry.min"] &&
+                  !values["entry.max"] &&
+                  !values["exit.min"] &&
+                  !values["exit.max"]
+                }
+                onClick={() => {
+                  setValues((v) => ({
+                    ...v,
+                    "entry.min": "",
+                    "entry.max": "",
+                    "exit.min": "",
+                    "exit.max": "",
+                  }));
+                  setDirty(true);
+                  setError("");
+                }}
+              >
+                Limpar trechos
+              </button>
+            </div>
             <p className="hint">
               Mínimo e máximo iguais fixam o eixo; o passo pode ficar vazio
-              nesse eixo. Aplique o caso para conferir a malha e iniciar a
-              busca.
+              nesse eixo. Trechos vazios mantêm entrada e saída livres. Aplique
+              o caso para conferir a malha e iniciar a busca.
             </p>
           </fieldset>
           <CoreInputPreview

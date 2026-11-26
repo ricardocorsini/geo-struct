@@ -50,6 +50,7 @@ function model() {
   const c = p.analysisCases[0];
   c.surfaceMode = "search";
   c.search = {
+    ...c.search,
     x: { ...bounds.x },
     y: { ...bounds.z },
     radius: { ...bounds.radius },
@@ -155,6 +156,7 @@ describe("malha circular", () => {
     const p = model(),
       progress: SearchProgress[] = [];
     p.analysisCases[0].search = {
+      ...p.analysisCases[0].search,
       x: larger.x,
       y: larger.z,
       radius: larger.radius,
@@ -181,6 +183,9 @@ describe("classificação da malha", () => {
     ].map(([f, b], i) => ({
       location: searchLocation(grid, i + 1),
       sliceCount: i === 6 ? null : 30,
+      entryX: null,
+      exitX: null,
+      filteredOut: false,
       issues: [],
       methods:
         i === 6
@@ -240,6 +245,9 @@ describe("classificação da malha", () => {
     const rows: SearchCandidate[] = [1.4, 1.3, 1.2, 1.1].map((value, i) => ({
       location: searchLocation(grid, i + 1),
       sliceCount: 2,
+      entryX: null,
+      exitX: null,
+      filteredOut: false,
       issues: [],
       methods: [
         {
@@ -356,6 +364,7 @@ describe("busca com as preparações e solvers de produção", () => {
       { x: 20, y: 2 },
     ];
     p.analysisCases[0].search = {
+      ...p.analysisCases[0].search,
       x: fixed(0),
       y: fixed(10),
       radius: axis(7, 10, 3),

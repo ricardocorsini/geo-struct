@@ -53,6 +53,10 @@ export const instructions: Record<Tool, string> = {
   load: "Clique no início e no fim da faixa. Depois informe a sobrecarga nas propriedades.",
   "case-circle":
     "Clique no centro e em um ponto para definir o círculo fixo deste caso. Esc cancela.",
+  "case-entry":
+    "Clique no X inicial e no X final do trecho admissível de entrada. Esc cancela.",
+  "case-exit":
+    "Clique no X inicial e no X final do trecho admissível de saída. Esc cancela.",
   circle: "Clique no centro e em um ponto do círculo para definir o raio.",
   "insert-vertex":
     "Clique no segmento do contorno selecionado para inserir um vértice.",
@@ -133,6 +137,8 @@ export function ModelCanvas({
   const twoPointTools: Tool[] = [
     "circle",
     "case-circle",
+    "case-entry",
+    "case-exit",
     "load",
     "move-contour",
     "copy-region",
@@ -754,6 +760,84 @@ export function ModelCanvas({
                     )}
                   </>
                 )}
+              {analysisCase.surfaceMode === "search" &&
+                selectedTerrain.length >= 2 &&
+                (
+                  [
+                    [
+                      "entry",
+                      analysisCase.search.entryRange,
+                      "Entrada",
+                      "#1b7a5e",
+                      -12,
+                    ],
+                    [
+                      "exit",
+                      analysisCase.search.exitRange,
+                      "Saída",
+                      "#b85e2a",
+                      -24,
+                    ],
+                  ] as const
+                ).map(([kind, range, title, color, dy]) => {
+                  if (
+                    range.min === null ||
+                    range.max === null ||
+                    range.max < range.min
+                  )
+                    return null;
+                  const z1 =
+                    elevation(selectedTerrain, range.min) ??
+                    selectedTerrain[0].y;
+                  const z2 =
+                    elevation(selectedTerrain, range.max) ??
+                    selectedTerrain.at(-1)!.y;
+                  const inner = selectedTerrain.filter(
+                    (pt) => pt.x > range.min! && pt.x < range.max!,
+                  );
+                  const pts = [
+                    { x: range.min, y: z1 },
+                    ...inner,
+                    { x: range.max, y: z2 },
+                  ];
+                  return (
+                    <g
+                      key={kind}
+                      data-search-limit={kind}
+                      stroke={color}
+                      fill="none"
+                    >
+                      <path
+                        d={path(pts)}
+                        strokeWidth={4}
+                        vectorEffect="non-scaling-stroke"
+                      />
+                      <line
+                        x1={range.min}
+                        y1={z1 - 1.2}
+                        x2={range.min}
+                        y2={z1 + 1.2}
+                        strokeWidth={2}
+                        vectorEffect="non-scaling-stroke"
+                      />
+                      <line
+                        x1={range.max}
+                        y1={z2 - 1.2}
+                        x2={range.max}
+                        y2={z2 + 1.2}
+                        strokeWidth={2}
+                        vectorEffect="non-scaling-stroke"
+                      />
+                      {label(
+                        { x: (range.min + range.max) / 2, y: (z1 + z2) / 2 },
+                        `${title} [${fmt(range.min)} ; ${fmt(range.max)}] m`,
+                        color,
+                        "middle",
+                        dy,
+                      )}
+                    </g>
+                  );
+                })}
             </g>
           )}
           {visibility.circle && section.circle && !analysisCase && (
@@ -925,6 +1009,21 @@ export function ModelCanvas({
           >
             Prévia: {analysisCase.name} ·{" "}
             {directionLabel(analysisCase.direction)} · prévia das entradas
+            {analysisCase.surfaceMode === "search" &&
+              (analysisCase.search.entryRange.min !== null ||
+                analysisCase.search.exitRange.min !== null) && (
+                <div>
+                  {analysisCase.search.entryRange.min !== null &&
+                  analysisCase.search.entryRange.max !== null
+                    ? `Entrada: ${fmt(analysisCase.search.entryRange.min)}–${fmt(analysisCase.search.entryRange.max)} m`
+                    : "Entrada livre"}
+                  {" · "}
+                  {analysisCase.search.exitRange.min !== null &&
+                  analysisCase.search.exitRange.max !== null
+                    ? `Saída: ${fmt(analysisCase.search.exitRange.min)}–${fmt(analysisCase.search.exitRange.max)} m`
+                    : "Saída livre"}
+                </div>
+              )}
           </div>
         )}
       </div>

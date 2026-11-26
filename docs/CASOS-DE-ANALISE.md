@@ -1,4 +1,4 @@
-# Casos de análise e formato v5
+# Casos de análise e formato v6
 
 Um caso prepara as entradas de uma análise na geometria de uma seção. Cada caso tem ID próprio; geometria, materiais, linha piezométrica e dados das faixas continuam no cadastro da seção. Mudar esses dados afeta os casos vinculados. A versão em desenvolvimento permite preparar a [geometria das fatias de um círculo fixo](GEOMETRIA-DO-CIRCULO.md), sem gravá-la no arquivo. Fellenius e Bishop também podem avaliar os círculos da [busca circular](BUSCA-CIRCULAR.md). O perfil numérico aplicado pertence ao caso e é salvo no arquivo. Resultados dos cálculos e prévias ficam na sessão.
 
@@ -6,20 +6,20 @@ Um caso prepara as entradas de uma análise na geometria de uma seção. Cada ca
 
 `project.analysisCases` admite de zero a 100 casos. IDs são únicos em todo o projeto. Um projeto novo ou migrado não recebe casos automaticamente.
 
-| Campo                     | Conteúdo e regra                                                                                                                   |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `id`, `name`, `sectionId` | ID único, nome não vazio até 120 caracteres e referência obrigatória a uma seção existente                                         |
-| `description`             | Hipóteses do cenário, até 2.000 caracteres; branco é pendência                                                                     |
-| `direction`               | `left-to-right` (+X), `right-to-left` (−X) ou nulo; não inferida pela inclinação do terreno                                        |
-| `methods`                 | Lista sem duplicatas de `bishop` e/ou `fellenius`; vazia é pendência. Os dois métodos estão disponíveis para círculo fixo e busca. |
-| `surfaceMode`             | `fixed`, `search` ou nulo                                                                                                          |
-| `numericalProfile`        | Configurações numéricas de geometria, Fellenius, Bishop e busca; campos numéricos ou nulos enquanto pendentes                      |
-| `fixedCircle`             | Centro `x`, `y` (Z) em m e `radius` em m; cada valor pode ser nulo enquanto pendente                                               |
-| `search`                  | Eixos `x`, `y` (Z) e `radius`, cada um com `min`, `max` e `step` em m, inicialmente nulos                                          |
-| `waterCondition`          | Nulo, `section`, `dry` ou `piezometric`                                                                                            |
-| `waterSource`             | Origem/justificativa da hipótese própria de água, até 2.000 caracteres                                                             |
-| `loadCondition`           | Nulo, `section`, `none` ou `selected`                                                                                              |
-| `loadIds`                 | IDs distintos de até 100 faixas da mesma seção, preservados também quando a seleção estiver inativa                                |
+| Campo                     | Conteúdo e regra                                                                                                                                            |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`, `name`, `sectionId` | ID único, nome não vazio até 120 caracteres e referência obrigatória a uma seção existente                                                                  |
+| `description`             | Hipóteses do cenário, até 2.000 caracteres; branco é pendência                                                                                              |
+| `direction`               | `left-to-right` (+X), `right-to-left` (−X) ou nulo; não inferida pela inclinação do terreno                                                                 |
+| `methods`                 | Lista sem duplicatas de `bishop` e/ou `fellenius`; vazia é pendência. Os dois métodos estão disponíveis para círculo fixo e busca.                          |
+| `surfaceMode`             | `fixed`, `search` ou nulo                                                                                                                                   |
+| `numericalProfile`        | Configurações numéricas de geometria, Fellenius, Bishop e busca; campos numéricos ou nulos enquanto pendentes                                               |
+| `fixedCircle`             | Centro `x`, `y` (Z) em m e `radius` em m; cada valor pode ser nulo enquanto pendente                                                                        |
+| `search`                  | Eixos `x`, `y` (Z) e `radius`, cada um com `min`, `max` e `step` em m, e trechos opcionais `entryRange`/`exitRange` (`min`, `max` em m), inicialmente nulos |
+| `waterCondition`          | Nulo, `section`, `dry` ou `piezometric`                                                                                                                     |
+| `waterSource`             | Origem/justificativa da hipótese própria de água, até 2.000 caracteres                                                                                      |
+| `loadCondition`           | Nulo, `section`, `none` ou `selected`                                                                                                                       |
+| `loadIds`                 | IDs distintos de até 100 faixas da mesma seção, preservados também quando a seleção estiver inativa                                                         |
 
 Coordenadas têm o limite de armazenamento existente de ±1.000.000 m; raios devem ser positivos e até 1.000.000 m; passos devem ser positivos e até 2.000.000 m. São limites de cadastro, sem significado de recomendação de engenharia. Campos faltantes permanecem nulos, sem valores presumidos. O referencial original X/Z é preservado ao mudar a direção; A normalização pelo sentido ocorre na entrada mecânica das fatias.
 
@@ -78,8 +78,8 @@ A prévia de caso permite navegar e inspecionar suas entradas; editar a geometri
 
 ## Migração
 
-O formato atual é `geostruct/5`. O leitor valida cada arquivo v1 a v4 pelo contrato declarado antes de migrar. Em v4, os casos existentes recebem `numericalProfile` vazio e `version: 5`. A abertura angular recebe os 3° já usados na preparação; os demais parâmetros ficam nulos e aparecem como pendências. Perfis numéricos que existiam apenas na sessão de uma versão anterior precisam ser preenchidos novamente.
+O formato atual é `geostruct/6`. O leitor valida cada arquivo v1 a v5 pelo contrato declarado antes de migrar. Em v5, os casos existentes preservam integralmente configurações e perfis, recebendo `entryRange` e `exitRange` nulos em `search` e `version: 6`. Em v4, os casos existentes recebem ainda `numericalProfile` vazio. A abertura angular recebe os 3° já usados na preparação; os demais parâmetros ficam nulos e aparecem como pendências. Perfis numéricos que existiam apenas na sessão de uma versão anterior precisam ser preenchidos novamente.
 
-Arquivos v3 recebem `analysisCases: []` e `version: 5`, conservando os demais campos, inclusive nulos, zeros, linhas/faixas inativas e círculo de tentativa. Arquivos v1/v2 recebem também os campos de água/cargas descritos em [Água e cargas](AGUA-E-CARGAS.md), sem pressupor hipóteses ausentes.
+Arquivos v3 recebem `analysisCases: []` e `version: 6`, conservando os demais campos, inclusive nulos, zeros, linhas/faixas inativas e círculo de tentativa. Arquivos v1/v2 recebem também os campos de água/cargas descritos em [Água e cargas](AGUA-E-CARGAS.md), sem pressupor hipóteses ausentes.
 
-Não se deduz direção, método ou cenário de um círculo antigo. IDs, materiais e geometria são preservados. Campos desconhecidos, referências inexistentes ou cruzadas entre seções e IDs duplicados são recusados. A recuperação local mantém a mesma chave e usa esse leitor. A abertura comunica a migração e marca o projeto para salvar; Salvar como conserva o original. Versões anteriores do aplicativo não leem v5.
+Não se deduz direção, método ou cenário de um círculo antigo. IDs, materiais e geometria são preservados. Campos desconhecidos, referências inexistentes ou cruzadas entre seções e IDs duplicados são recusados. A recuperação local mantém a mesma chave e usa esse leitor. A abertura comunica a migração e marca o projeto para salvar; Salvar como conserva o original. Versões anteriores do aplicativo não leem v6.

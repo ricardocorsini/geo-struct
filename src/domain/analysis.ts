@@ -83,7 +83,13 @@ export function addAnalysisCase(
         surfaceMode: null,
         numericalProfile: emptyNumericalProfile(),
         fixedCircle: { x: null, y: null, radius: null },
-        search: { x: axis(), y: axis(), radius: axis() },
+        search: {
+          x: axis(),
+          y: axis(),
+          radius: axis(),
+          entryRange: { min: null, max: null },
+          exitRange: { min: null, max: null },
+        },
         waterCondition: null,
         waterSource: "",
         loadCondition: null,
@@ -185,7 +191,7 @@ export function caseIssues(c: AnalysisCase): CaseIssue[] {
     Object.values(c.fixedCircle).some((v) => v === null)
   )
     pending("complete o centro X/Z e o raio do círculo fixo.");
-  if (c.surfaceMode === "search")
+  if (c.surfaceMode === "search") {
     for (const [key, label] of [
       ["x", "Centro X"],
       ["y", "Centro Z"],
@@ -204,5 +210,19 @@ export function caseIssues(c: AnalysisCase): CaseIssue[] {
           pending(`${label}: informe o passo da busca.`);
       }
     }
+    for (const [rangeKey, rangeLabel] of [
+      ["entryRange", "Trecho de entrada"],
+      ["exitRange", "Trecho de saída"],
+    ] as const) {
+      const { min, max } = c.search[rangeKey];
+      if ((min === null) !== (max === null))
+        pending(`${rangeLabel}: informe X mínimo e X máximo.`);
+      if (min !== null && max !== null && max < min)
+        issues.push({
+          level: "error",
+          message: `${rangeLabel}: o X máximo não pode ser menor que o X mínimo.`,
+        });
+    }
+  }
   return issues;
 }

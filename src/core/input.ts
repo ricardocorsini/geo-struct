@@ -15,7 +15,7 @@ export type CoreInput = Immutable<{
   contract: "geostruct-input/1";
   stage: "inputs-only";
   origin: {
-    projectFormat: "geostruct/5";
+    projectFormat: "geostruct/6";
     project: { id: string; name: string };
     section: { id: string; name: string };
     analysisCase: { id: string; name: string };
@@ -82,6 +82,10 @@ export type CoreInput = Immutable<{
     | {
         mode: "search";
         axes: { x: SearchAxis; z: SearchAxis; radius: SearchAxis };
+        limits: {
+          entry: { min: number | null; max: number | null };
+          exit: { min: number | null; max: number | null };
+        };
       };
 }>;
 
